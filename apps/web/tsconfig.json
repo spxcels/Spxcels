@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", // Updated to modern JS for Node/Prisma
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true, // Keep Next.js handling compilation
+    "esModuleInterop": true,
+    "module": "ESNext", // Needed for tsx & ES module support
+    "moduleResolution": "Node", // Changed from "bundler" to Node for Node scripts
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@spxcel/db": [
+        "../../packages/db"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "prisma/**/*.ts" // Added: include seed scripts for Prisma
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
