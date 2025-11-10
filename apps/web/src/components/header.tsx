@@ -22,10 +22,10 @@ interface SearchResult {
   type: "model" | "brand";
 }
 
-const ThemeIcon = ({ isDark, size = 18 }: { isDark: boolean; size?: number }) => {
+const ThemeIcon = ({ isDark }: { isDark: boolean }) => {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  if (!mounted) return isDark ? <Sun size={size} /> : <Moon size={size} />;
+  if (!mounted) return isDark ? <Sun size={18} /> : <Moon size={18} />;
 
   return (
     <AnimatePresence mode="wait">
@@ -37,7 +37,7 @@ const ThemeIcon = ({ isDark, size = 18 }: { isDark: boolean; size?: number }) =>
           exit={{ rotate: -90, opacity: 0, scale: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <Sun size={size} />
+          <Sun size={18} />
         </motion.div>
       ) : (
         <motion.div
@@ -47,7 +47,7 @@ const ThemeIcon = ({ isDark, size = 18 }: { isDark: boolean; size?: number }) =>
           exit={{ rotate: 90, opacity: 0, scale: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <Moon size={size} />
+          <Moon size={18} />
         </motion.div>
       )}
     </AnimatePresence>
@@ -66,7 +66,7 @@ export default function Header() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLUListElement>(null);
 
-  // Load saved theme
+  // Load theme from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "dark") {
@@ -84,7 +84,7 @@ export default function Header() {
     });
   };
 
-  // Fetch search results
+  // Debounced search
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -101,7 +101,7 @@ export default function Header() {
       } catch (e) {
         console.error("Search error:", e);
       }
-    }, 300);
+    }, 400);
 
     return () => clearTimeout(timeout);
   }, [searchQuery]);
@@ -120,6 +120,11 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // Prevent scroll when mobile search is open
+  useEffect(() => {
+    document.body.style.overflow = mobileSearchOpen ? "hidden" : "";
+  }, [mobileSearchOpen]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!searchResults.length) return;
 
@@ -133,11 +138,10 @@ export default function Header() {
       e.preventDefault();
       const item = searchResults[activeIndex] || searchResults[0];
       if (item) {
-        if (item.type === "model" && item.slug) {
+        if (item.type === "model" && item.slug)
           window.location.href = `/phones/${item.slug}`;
-        } else if (item.type === "brand") {
+        else if (item.type === "brand")
           window.location.href = `/phones?brand=${encodeURIComponent(item.name)}`;
-        }
         setDropdownOpen(false);
       }
     } else if (e.key === "Escape") {
@@ -170,30 +174,30 @@ export default function Header() {
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2">
-            <div className="relative w-8 h-8 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-md flex items-center justify-center text-white font-bold">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-md flex items-center justify-center text-white font-bold">
               spX
             </div>
-            <span className="hidden sm:inline-block font-semibold text-slate-900 dark:text-slate-100">
+            <span className="hidden sm:block font-semibold text-slate-900 dark:text-slate-100">
               Spxcel
             </span>
-          </a>
+          </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.name}
                 href={item.href}
-                className="flex items-center gap-1 text-slate-700 dark:text-slate-200 font-medium hover:text-slate-900 dark:hover:text-white"
+                className="flex items-center gap-1 text-slate-700 dark:text-slate-200 font-medium hover:text-sky-600 dark:hover:text-sky-400"
               >
                 {item.icon}
                 {item.name}
-              </a>
+              </Link>
             ))}
           </nav>
 
-          {/* Search + Theme */}
+          {/* Desktop Search + Theme */}
           <div className="hidden md:flex items-center gap-4 relative">
             <div className="relative w-64">
               <Search size={16} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -218,8 +222,8 @@ export default function Header() {
                       <li
                         key={`${item.type}-${item.id}`}
                         className={`px-3 py-2 cursor-pointer text-sm ${activeIndex === idx
-                          ? "bg-sky-100 dark:bg-slate-700"
-                          : "hover:bg-slate-100 dark:hover:bg-slate-700"
+                            ? "bg-sky-100 dark:bg-slate-700"
+                            : "hover:bg-slate-100 dark:hover:bg-slate-700"
                           }`}
                         onMouseEnter={() => setActiveIndex(idx)}
                         onClick={() => {
@@ -232,9 +236,7 @@ export default function Header() {
                       >
                         <div className="font-medium">{highlight(item.name)}</div>
                         {item.brand && (
-                          <div className="text-xs text-slate-500">
-                            {highlight(item.brand.name)}
-                          </div>
+                          <div className="text-xs text-slate-500">{highlight(item.brand.name)}</div>
                         )}
                       </li>
                     ))
@@ -247,32 +249,63 @@ export default function Header() {
 
             <button
               onClick={toggleTheme}
+              aria-label="Toggle theme"
               className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <ThemeIcon isDark={isDark} />
             </button>
           </div>
 
-          {/* Mobile controls */}
+          {/* Mobile Controls */}
           <div className="md:hidden flex items-center gap-2">
             <button
               onClick={() => setMobileSearchOpen(true)}
+              aria-label="Search"
               className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <Search size={20} />
             </button>
             <button
               onClick={toggleTheme}
+              aria-label="Toggle theme"
               className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
             >
-              <ThemeIcon isDark={isDark} size={18} />
+              <ThemeIcon isDark={isDark} />
             </button>
-            <button onClick={() => setOpen(!open)} className="p-2">
-              <Menu size={20} />
+            <button
+              onClick={() => setOpen((o) => !o)}
+              aria-label="Toggle menu"
+              className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              {open ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {open && (
+          <motion.nav
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="md:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 space-y-3"
+          >
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-medium hover:text-sky-600 dark:hover:text-sky-400"
+                onClick={() => setOpen(false)}
+              >
+                {item.icon}
+                {item.name}
+              </Link>
+            ))}
+          </motion.nav>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Search */}
       <AnimatePresence>
@@ -283,7 +316,7 @@ export default function Header() {
             exit={{ y: -100, opacity: 0 }}
             className="fixed inset-0 bg-white dark:bg-slate-900 z-50 p-4"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-4">
               <Search size={20} />
               <input
                 ref={searchInputRef}
@@ -291,9 +324,9 @@ export default function Header() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search..."
-                className="w-full bg-transparent outline-none text-lg"
+                className="w-full bg-transparent outline-none text-lg text-slate-900 dark:text-slate-100"
               />
-              <button onClick={() => setMobileSearchOpen(false)}>
+              <button onClick={() => setMobileSearchOpen(false)} aria-label="Close search">
                 <X size={20} />
               </button>
             </div>
