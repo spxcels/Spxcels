@@ -174,7 +174,7 @@ export default function Home() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-lg text-center"
         >
-          <span className="font-semibold">{greeting}</span>, welcome to Spex!{" "}
+          <span className="font-semibold">{greeting}</span>, welcome to Spxcel!{" "}
           <span className="font-mono">{currentTime}</span>
         </motion.p>
 
