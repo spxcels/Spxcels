@@ -4,3 +4,7 @@ packages:
 
 onlyBuiltDependencies:
   - '@nestjs/core'
+
+neverBuiltDependencies:
+  - baseline-browser-mapping
+  - @radix-ui/*

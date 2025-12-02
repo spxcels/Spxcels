@@ -1,8 +1,5 @@
 {
-  "framework": "nextjs",
-  "rootDirectory": "apps/web",
-  "installCommand": "pnpm install --frozen-lockfile=false",
-  "buildCommand": "pnpm -F web build",
-  "devCommand": "pnpm -F web dev"
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "buildCommand": "pnpm --filter web... build",
+  "ignoreCommand": "echo 'Always build'"
 }
-

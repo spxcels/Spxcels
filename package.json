@@ -2,16 +2,9 @@
   "name": "spxcel",
   "private": true,
   "version": "1.0.0",
-  "devDependencies": {
-    "@prisma/client": "latest",
-    "@types/jest": "^30.0.0",
-    "prisma": "latest"
-  },
   "scripts": {
-    "prisma": "prisma",
-    "generate": "prisma generate",
-    "migrate": "prisma migrate dev",
-    "studio": "prisma studio",
-    "dev": "echo \"Run apps individually: cd apps/web | apps/admin/backend | apps/admin/frontend\""
+    "dev": "echo \"Run apps individually: pnpm -F web dev | pnpm -F admin-backend start | pnpm -F admin-frontend dev\"",
+    "vercel-build": "pnpm --filter web... build",
+    "lint": "echo \"Add root lint if needed\""
   }
 }
