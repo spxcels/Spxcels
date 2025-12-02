@@ -1,0 +1,44 @@
+{
+  "extends": "../../tsconfig.json",
+
+  "compilerOptions": {
+    /* NestJS compatible module system */
+    "module": "Node16",
+    "moduleResolution": "Node16",
+
+    /* Needed for decorators */
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+
+    /* Output settings */
+    "target": "ES2022",
+    "outDir": "./dist",
+    "sourceMap": true,
+    "declaration": true,
+    "removeComments": true,
+    "incremental": true,
+
+    /* Interop */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    /* Strict mode */
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Monorepo path alias */
+    "paths": {
+      "@spxcel/db": ["../../packages/db/src"]
+    },
+
+    /* Types for request.user */
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
+    "types": ["node", "express"]
+  },
+
+  "include": ["src"]
+}

@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@spxcel/db": ["packages/db/src"],
+      "@spxcel/ui": ["packages/ui/src"],
+      "@spxcel/utils": ["packages/utils/src"]
+    }
+  }
+}

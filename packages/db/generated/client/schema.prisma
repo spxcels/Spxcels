@@ -1,0 +1,150 @@
+// =====================================
+//  Prisma Schema
+//  Docs: https://pris.ly/d/prisma-schema
+// =====================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // default db url (backend fallback)
+}
+
+// =====================================
+// 📦 ADMIN CONFIG (for dashboard settings)
+// =====================================
+//
+// Stores dynamic SETTINGS such as DATABASE_URL, API keys, etc.
+// This is SAFE because only admins can access & update it.
+//
+model AdminConfig {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+}
+
+// =====================================
+// 🔐 ADMIN USER
+// =====================================
+model Admin {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String // hashed password
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =====================================
+// 📱 PHONE BRAND
+// =====================================
+model PhoneBrand {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  models PhoneModel[]
+}
+
+// =====================================
+// 📱 PHONE MODEL
+// =====================================
+model PhoneModel {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  image     String?
+  colors    String[]
+  variants  String[]
+  brandId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brand      PhoneBrand      @relation(fields: [brandId], references: [id])
+  specs      PhoneSpecs?
+  media      PhoneMedia[]
+  affiliates AffiliateLink[]
+}
+
+// =====================================
+// ⚙️ PHONE SPECS
+// =====================================
+model PhoneSpecs {
+  id              Int      @id @default(autoincrement())
+  modelId         Int      @unique
+  os              String?
+  chipset         String?
+  cpu             String?
+  gpu             String?
+  displayType     String?
+  displaySize     String?
+  resolution      String?
+  refreshRate     String?
+  protection      String?
+  mainCamera      String?
+  selfieCamera    String?
+  videoRecording  String?
+  batteryCapacity String?
+  chargingSpeed   String?
+  network         String?
+  sim             String?
+  wifi            String?
+  bluetooth       String?
+  usb             String?
+  sensors         String?
+  dimensions      String?
+  weight          String?
+  buildMaterial   String?
+  releaseDate     String?
+  otherFeatures   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  model PhoneModel @relation(fields: [modelId], references: [id])
+}
+
+// =====================================
+// 🖼️ PHONE MEDIA
+// =====================================
+model PhoneMedia {
+  id        Int       @id @default(autoincrement())
+  modelId   Int
+  url       String
+  publicId  String?
+  type      MediaType
+  alt       String?
+  width     Int?
+  height    Int?
+  duration  Float?
+  createdAt DateTime  @default(now())
+
+  model PhoneModel @relation(fields: [modelId], references: [id])
+}
+
+// =====================================
+// 💸 AFFILIATE LINKS
+// =====================================
+model AffiliateLink {
+  id        Int      @id @default(autoincrement())
+  modelId   Int
+  storeName String
+  url       String
+  price     String?
+  currency  String?
+  createdAt DateTime @default(now())
+
+  model PhoneModel @relation(fields: [modelId], references: [id])
+}
+
+// =====================================
+// 🗂️ ENUMS
+// =====================================
+enum MediaType {
+  IMAGE
+  VIDEO
+}

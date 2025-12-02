@@ -1,4 +1,4 @@
-import prisma from "../../../lib/prisma";
+import prisma from "@spxcel/db";
 import PhoneDetailsClient from "./PhoneDetailsClient";
 
 export async function generateStaticParams() {
@@ -42,7 +42,6 @@ export default async function PhonePage({
     );
   }
 
-  // 🧩 Map Prisma data → PhoneDetailsClient Model type
   const formattedModel = {
     id: model.id,
     name: model.name,
@@ -56,11 +55,10 @@ export default async function PhonePage({
       slug: model.brand.slug,
     },
     specs: model.specs || null,
-    // ✅ FIX: include type so ImageSlider knows if it's an IMAGE or VIDEO
     media: model.media?.map((m) => ({
       id: m.id,
       url: m.url,
-      type: m.type, // ✅ Added
+      type: m.type,
     })),
     affiliates: model.affiliates?.map((a) => ({
       id: a.id,

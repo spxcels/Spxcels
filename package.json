@@ -1,0 +1,17 @@
+{
+  "name": "spxcel",
+  "private": true,
+  "version": "1.0.0",
+  "devDependencies": {
+    "@prisma/client": "latest",
+    "@types/jest": "^30.0.0",
+    "prisma": "latest"
+  },
+  "scripts": {
+    "prisma": "prisma",
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "studio": "prisma studio",
+    "dev": "echo \"Run apps individually: cd apps/web | apps/admin/backend | apps/admin/frontend\""
+  }
+}

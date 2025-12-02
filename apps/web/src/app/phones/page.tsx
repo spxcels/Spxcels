@@ -1,4 +1,4 @@
-import prisma from "../../lib/prisma";
+import prisma from "@spxcel/db";
 import PhonesPage from "./PhonesPage";
 
 export default async function Page() {
@@ -8,21 +8,25 @@ export default async function Page() {
 
   const models = await prisma.phoneModel.findMany({
     include: {
-      brand: true,
+      brand: {
+        select: { id: true, name: true },
+      },
     },
     orderBy: { name: "asc" },
   });
 
-  // ✅ Send colors + variants directly
-  const modelsWithDisplay = models.map((model) => ({
-    id: model.id,
-    name: model.name,
-    slug: model.slug,
-    image: model.image,
-    colors: model.colors,       // <-- now directly accessible
-    variants: model.variants,   // same
-    brandId: model.brandId,
-    brand: model.brand,
+  const modelsWithDisplay = models.map((m) => ({
+    id: m.id,
+    name: m.name,
+    slug: m.slug,
+    image: m.image || null,
+    colors: m.colors || [],
+    variants: m.variants || [],
+    brandId: m.brandId,
+    brand: {
+      id: m.brand?.id ?? 0,
+      name: m.brand?.name ?? "Unknown",
+    },
   }));
 
   return <PhonesPage brands={brands} models={modelsWithDisplay} />;

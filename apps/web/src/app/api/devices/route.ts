@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../lib/prisma"; // make sure you have prisma client setup
+import prisma from "@spxcel/db";
 
 export async function GET() {
   try {
@@ -11,11 +11,10 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
 
-    // Map to frontend-friendly structure
     const results = devices.map((d) => ({
       id: d.id,
       name: d.name,
-      image: d.image ?? "/images/placeholder.jpg", // fallback if no image
+      image: d.image ?? "/images/placeholder.jpg",
       brand: d.brand.name,
       specs: {
         OS: d.specs?.os ?? "-",
@@ -25,13 +24,16 @@ export async function GET() {
         Display: d.specs?.displaySize ?? "-",
         Camera: d.specs?.mainCamera ?? "-",
         Battery: d.specs?.batteryCapacity ?? "-",
-        Price: "-", // optional: you can fill from AffiliateLink later
+        Price: "-",
       },
     }));
 
     return NextResponse.json({ results });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ results: [] }, { status: 500 });
+    console.error("❌ /api/devices error:", error);
+    return NextResponse.json(
+      { error: "Failed to load devices", results: [] },
+      { status: 500 }
+    );
   }
 }

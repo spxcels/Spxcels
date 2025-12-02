@@ -1,46 +1,45 @@
 {
+  "extends": "../../tsconfig.json",
+
   "compilerOptions": {
-    "target": "ES2022", // Updated to modern JS for Node/Prisma
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "target": "ES2022",
+
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
-    "noEmit": true, // Keep Next.js handling compilation
+    "noEmit": true,
+
     "esModuleInterop": true,
-    "module": "ESNext", // Needed for tsx & ES module support
-    "moduleResolution": "Node", // Changed from "bundler" to Node for Node scripts
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "resolveJsonModule": true,
     "isolatedModules": true,
+
+    /* Next.js transforms JSX */
     "jsx": "react-jsx",
+
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+
+    /* Next.js plugin */
+    "plugins": [{ "name": "next" }],
+
+    /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@spxcel/db": [
-        "../../packages/db"
-      ]
+      "@/*": ["./src/*"],
+
+      /* Shared Prisma Client */
+      "@spxcel/db": ["../../packages/db/src"]
     }
   },
+
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "prisma/**/*.ts" // Added: include seed scripts for Prisma
+    ".next/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+
+  "exclude": ["node_modules"]
 }
