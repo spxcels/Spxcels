@@ -4,20 +4,22 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
-  // ✅ Expose admin credentials to Next.js runtime
+  // Load your admin environment variables
   env: {
     ADMIN_USERNAME: process.env.ADMIN_USERNAME,
     ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
     ADMIN_SECRET: process.env.ADMIN_SECRET,
   },
 
-  // ✅ Optional: Keep Webpack configuration open for custom rules
+  // ✅ Next.js 16 correct way to externalize Prisma packages
+  serverExternalPackages: ["@prisma/client", "prisma"],
+
   webpack: (config) => {
     return config;
   },
 
-  // ✅ Fix Turbopack root for monorepo
   turbopack: {
+    // Important for Nx monorepo
     root: join(__dirname, "../../"),
   },
 

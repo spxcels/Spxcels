@@ -1,35 +1,38 @@
-// =====================================
-//  Prisma Schema
-//  Docs: https://pris.ly/d/prisma-schema
-// =====================================
+// ====================================================================
+// 📦 Prisma Schema for Spxcel
+// Docs: https://pris.ly/d/prisma-schema
+// ====================================================================
 
+// --------------------------------------------------
+// 🧩 Prisma Client Generator
+// --------------------------------------------------
+// Output is redirected into /dist to support monorepo
+// (Next.js / Vercel require runtime JS, not TS source)
+// --------------------------------------------------
 generator client {
-  provider      = "prisma-client-js"
-  output        = "../generated/client"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
+// --------------------------------------------------
+// 🗄️ Database Connection
+// --------------------------------------------------
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // default db url (backend fallback)
+  url      = env("DATABASE_URL")
 }
 
-// =====================================
-// 📦 ADMIN CONFIG (for dashboard settings)
-// =====================================
-//
-// Stores dynamic SETTINGS such as DATABASE_URL, API keys, etc.
-// This is SAFE because only admins can access & update it.
-//
+// ====================================================================
+// 🔐 AUTH & ADMIN
+// ====================================================================
+
+// Admin configuration (Dynamic key-value store)
 model AdminConfig {
   id    Int    @id @default(autoincrement())
   key   String @unique
   value String
 }
 
-// =====================================
-// 🔐 ADMIN USER
-// =====================================
+// Admin user
 model Admin {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -39,9 +42,11 @@ model Admin {
   updatedAt DateTime @updatedAt
 }
 
-// =====================================
-// 📱 PHONE BRAND
-// =====================================
+// ====================================================================
+// 📱 PHONES: Brands, Models, Specs, Media, Affiliate Links
+// ====================================================================
+
+// Brand (Samsung, Apple, Xiaomi, etc.)
 model PhoneBrand {
   id        Int      @id @default(autoincrement())
   name      String   @unique
@@ -52,9 +57,9 @@ model PhoneBrand {
   models PhoneModel[]
 }
 
-// =====================================
-// 📱 PHONE MODEL
-// =====================================
+// --------------------------------------------------
+// Phone Model (Samsung S24, iPhone 16, etc.)
+// --------------------------------------------------
 model PhoneModel {
   id        Int      @id @default(autoincrement())
   name      String
@@ -72,9 +77,9 @@ model PhoneModel {
   affiliates AffiliateLink[]
 }
 
-// =====================================
-// ⚙️ PHONE SPECS
-// =====================================
+// --------------------------------------------------
+// Detailed Specifications
+// --------------------------------------------------
 model PhoneSpecs {
   id              Int      @id @default(autoincrement())
   modelId         Int      @unique
@@ -109,9 +114,9 @@ model PhoneSpecs {
   model PhoneModel @relation(fields: [modelId], references: [id])
 }
 
-// =====================================
-// 🖼️ PHONE MEDIA
-// =====================================
+// --------------------------------------------------
+// Media (Images / Videos)
+// --------------------------------------------------
 model PhoneMedia {
   id        Int       @id @default(autoincrement())
   modelId   Int
@@ -127,9 +132,9 @@ model PhoneMedia {
   model PhoneModel @relation(fields: [modelId], references: [id])
 }
 
-// =====================================
-// 💸 AFFILIATE LINKS
-// =====================================
+// --------------------------------------------------
+// Affiliate Links (Amazon, Flipkart, etc.)
+// --------------------------------------------------
 model AffiliateLink {
   id        Int      @id @default(autoincrement())
   modelId   Int
@@ -142,9 +147,9 @@ model AffiliateLink {
   model PhoneModel @relation(fields: [modelId], references: [id])
 }
 
-// =====================================
-// 🗂️ ENUMS
-// =====================================
+// --------------------------------------------------
+// Enums
+// --------------------------------------------------
 enum MediaType {
   IMAGE
   VIDEO

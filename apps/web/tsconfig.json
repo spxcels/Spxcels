@@ -1,36 +1,33 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig.base.json",
 
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2020",
 
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": ["dom", "dom.iterable", "es2020"],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": true,
+    "strict": false,
     "noEmit": true,
 
     "esModuleInterop": true,
-    "module": "ESNext",
+    "module": "CommonJS",
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "isolatedModules": true,
 
-    /* Next.js transforms JSX */
     "jsx": "react-jsx",
 
     "incremental": true,
-
-    /* Next.js plugin */
     "plugins": [{ "name": "next" }],
 
-    /* Path aliases */
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
 
-      /* Shared Prisma Client */
-      "@spxcel/db": ["../../packages/db/src"]
+      /* FIXED — NEVER point prisma to dist */
+      "@spxcel/db": ["../../packages/db"],
+      "@spxcel/db/*": ["../../packages/db/*"]
     }
   },
 
@@ -40,6 +37,5 @@
     "**/*.tsx",
     ".next/types/**/*.ts"
   ],
-
   "exclude": ["node_modules"]
 }

@@ -6,21 +6,24 @@
     "node": ">=18.18.0 <=20.11.1"
   },
   "scripts": {
-    "prisma": "prisma",
-    "generate": "prisma generate",
-    "migrate": "prisma migrate dev",
-    "studio": "prisma studio",
     "dev": "pnpm -F web dev",
     "build": "pnpm -F web build",
-    "lint": "pnpm -F web lint || true"
-  },
-  "devDependencies": {
-    "@prisma/client": "latest",
-    "@types/jest": "^30.0.0",
-    "prisma": "latest"
+    "lint": "pnpm -F web lint || true",
+    "prisma": "pnpm -F @spxcel/db prisma",
+    "generate": "pnpm -F @spxcel/db generate",
+    "migrate": "pnpm -F @spxcel/db migrate",
+    "studio": "pnpm -F @spxcel/db studio"
   },
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "nx": "22.1.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "prisma": "^5.22.0"
+  }
 }

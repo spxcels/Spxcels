@@ -2,75 +2,102 @@
 # Root Monorepo Ignore (Spxcel)
 # =====================================================
 
-# Node
+# -------------------------
+# Node / Package Managers
+# -------------------------
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 package-lock.json
-
-# PNPM store
 .pnpm-store/
 
-# Build output
+# -------------------------
+# Build Artifacts
+# -------------------------
 dist/
 build/
 out/
 .next/
 .vercel/output/
 
-# Vite cache
+# -------------------------
+# Caches
+# -------------------------
 .vite/
-*.tsbuildinfo
-
-# Next.js cache
 .next/
-out/
 .next/static/
-
-# TypeScript
 *.tsbuildinfo
 
-# Prisma
-prisma/generated/
+# -------------------------
+# TypeScript
+# -------------------------
+*.tsbuildinfo
+
+# -------------------------
+# Prisma (IMPORTANT)
+# -------------------------
+# Ignore all generated Prisma clients in the monorepo
+packages/db/generated/
+packages/db/generated/**
 **/generated/
+prisma/generated/
+
+# Ignore local sqlite or dev databases
 **/*.db
 **/*.sqlite
 **/*.db-journal
 
-# Environment files
+# Prisma migration locks
+**/migration_lock.toml
+
+# -------------------------
+# Environment Files
+# -------------------------
 .env
 .env.*
 !.env.example
 
+# -------------------------
 # Logs
+# -------------------------
 logs/
 *.log
 *.log.*
 pm2.log
 
-# VSCode / JetBrains
+# -------------------------
+# IDE / Editor
+# -------------------------
 .vscode/
 .idea/
 
-# OS files
+# -------------------------
+# OS
+# -------------------------
 .DS_Store
 Thumbs.db
 
-# Lint cache
-.eslintcache
-
-# Test coverage
+# -------------------------
+# Test / Coverage
+# -------------------------
 coverage/
 
-# Local database folders
-**/migrations/*-dev/
-**/migration_lock.toml
-
-# Vercel
-.vercel/
-
-# Temporary files
+# -------------------------
+# Temporary Files
+# -------------------------
 tmp/
 temp/
+
+# -------------------------
+# Nx Cache / Internal
+# -------------------------
+.nx/cache
+.nx/workspace-data
+
+# -------------------------
+# Misc Project-Specific
+# -------------------------
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
