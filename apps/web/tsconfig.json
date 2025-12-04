@@ -22,12 +22,13 @@
     "plugins": [{ "name": "next" }],
 
     "baseUrl": ".",
+
     "paths": {
       "@/*": ["./src/*"],
 
-      /* FIXED — NEVER point prisma to dist */
-      "@spxcel/db": ["../../packages/db"],
-      "@spxcel/db/*": ["../../packages/db/*"]
+      // ✅ FIX: Point to the actual entry file of your DB package
+      "@spxcel/db": ["../../packages/db/src/index.ts"],
+      "@spxcel/db/*": ["../../packages/db/src/*"]
     }
   },
 
