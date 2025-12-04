@@ -16,9 +16,12 @@
 
   "scripts": {
     "build": "tsc",
+
     "generate": "prisma generate",
     "migrate": "prisma migrate dev",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+
+    "postinstall": "prisma generate"
   },
 
   "prisma": {
