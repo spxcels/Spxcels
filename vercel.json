@@ -3,7 +3,9 @@
   "installCommand": "pnpm install",
   "buildCommand": "pnpm -F web build",
   "outputDirectory": "apps/web/.next",
+
   "env": {
-    "PNPM_WORKSPACE_ROOT": "true"
+    "PNPM_WORKSPACE_ROOT": "true",
+    "NODE_VERSION": "20.11.1"
   }
 }
