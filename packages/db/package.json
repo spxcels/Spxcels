@@ -1,28 +1,35 @@
 {
   "name": "@spxcel/db",
   "version": "1.0.0",
+
   "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
+
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     }
   },
+
   "scripts": {
     "build": "tsc",
     "generate": "prisma generate",
     "migrate": "prisma migrate dev",
     "studio": "prisma studio"
   },
+
   "prisma": {
     "schema": "./prisma/schema.prisma"
   },
+
   "dependencies": {
-    "@prisma/client": "^5.22.0",
-    "prisma": "^5.10.0"
+    "@prisma/client": "5.22.0",
+    "prisma": "5.22.0"
   },
+
   "devDependencies": {
     "@types/node": "^24.10.1",
     "typescript": "^5.0.0"
