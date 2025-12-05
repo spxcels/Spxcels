@@ -2,37 +2,46 @@ import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { ValidationPipe } from "@nestjs/common";
 import cookieParser from "cookie-parser";
-import { json, urlencoded } from "express"; 
+import { json, urlencoded } from "express";
 import { PrismaService } from "./prisma/prisma.service";
 import { AdminConfigService } from "./admin-config/admin-config.service";
 
 async function bootstrap() {
-  // 👇 IMPORTANT: enable body parser BEFORE creating modules
   const app = await NestFactory.create(AppModule, {
     bodyParser: false,
   });
 
+  // Body parser
   app.use(json({ limit: "10mb" }));
   app.use(urlencoded({ extended: true, limit: "10mb" }));
 
-  // Load AdminConfig DB URL
-  const adminConfigService = app.get(AdminConfigService);
-  const dbConfig = await adminConfigService.getDbUrl();
+  // Load DATABASE_URL from AdminConfig (optional dynamic config)
+  try {
+    const adminConfigService = app.get(AdminConfigService);
+    const dbConfig = await adminConfigService.getDbUrl();
 
-  if (dbConfig?.value) {
-    console.log("🔄 Using DATABASE_URL from AdminConfig");
-    process.env.DATABASE_URL = dbConfig.value;
-  } else {
-    console.log("⚠️ Using default DATABASE_URL");
+    if (dbConfig?.value) {
+      console.log("🔄 Using DATABASE_URL from AdminConfig");
+      process.env.DATABASE_URL = dbConfig.value;
+    } else {
+      console.log("⚠️ Using default DATABASE_URL");
+    }
+  } catch (err) {
+    console.error("⚠️ AdminConfig not available yet, using default DATABASE_URL");
   }
 
+  // Prisma
   const prismaService = app.get(PrismaService);
-  await prismaService.$disconnect();
   await prismaService.$connect();
+  await prismaService.enableShutdownHooks(app);
 
   // CORS
   app.enableCors({
-    origin: "http://localhost:5173",
+    origin: [
+      process.env.ADMIN_FRONTEND_URL,
+      process.env.WEB_FRONTEND_URL,
+      "http://localhost:5173",
+    ].filter(Boolean),
     credentials: true,
   });
 
@@ -47,12 +56,13 @@ async function bootstrap() {
     })
   );
 
-  // Graceful shutdown
-  await prismaService.enableShutdownHooks(app);
+  // PORT for Render
+  const port = process.env.PORT || 3000;
 
-  const port = process.env.PORT ?? 3000;
-  await app.listen(port);
-  console.log(`🚀 Backend running at http://localhost:${port}`);
+  // IMPORTANT: Bind to 0.0.0.0 for Render
+  await app.listen(port, "0.0.0.0");
+
+  console.log(`🚀 Backend running on port ${port}`);
 }
 
 bootstrap();

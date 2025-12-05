@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: spxcel-admin-backend
+    env: node
+    branch: main
+    root: apps/admin-backend
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
+    startCommand: node dist/main.js
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Add more secret vars in Render UI or here:
+      # - key: DATABASE_URL
+      #   value: your-db-url
