@@ -2,11 +2,9 @@
   "name": "spxcel",
   "private": true,
   "version": "1.0.0",
-
   "engines": {
     "node": "20.11.1"
   },
-
   "scripts": {
     "dev": "pnpm -F web dev",
     "build": "pnpm -F web build",
@@ -16,19 +14,20 @@
     "migrate": "pnpm -F @spxcel/db migrate",
     "studio": "pnpm -F @spxcel/db studio"
   },
-
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
-
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/jest": "^30.0.0",
     "nx": "22.1.3"
   },
-
   "dependencies": {
-    "@prisma/client": "^5.22.0",
-    "prisma": "^5.22.0"
+    "@prisma/adapter-pg": "^7.1.0",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "pg": "^8.16.3"
   }
 }

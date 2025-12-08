@@ -2,7 +2,7 @@ import prisma from "@spxcel/db";
 import bcrypt from "bcryptjs";
 
 export default async function seedAdmin() {
-  console.log("➡️ Seeding Admin user...");
+  console.log("🌱 Seeding Admin user...");
 
   const hashed = await bcrypt.hash("admin123", 10);
 
@@ -16,5 +16,5 @@ export default async function seedAdmin() {
     },
   });
 
-  console.log("✔️ Admin seeded successfully");
+  console.log("✔ Admin seeded successfully");
 }

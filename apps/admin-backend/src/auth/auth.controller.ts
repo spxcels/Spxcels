@@ -10,19 +10,20 @@ import {
   Get,
   Patch,
 } from "@nestjs/common";
-import type { Response } from "express";
 
+import type { Response } from "express";
 import { AuthService } from "./auth.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 
 import type { AuthenticatedRequest } from "../types/auth-request";
 
-// -------------------------
-// DTO WITH VALIDATION
-// -------------------------
 import { IsEmail, IsString, MinLength } from "class-validator";
+import bcrypt from "bcryptjs";
 
+// ------------------------------
+// DTOs
+// ------------------------------
 class LoginDto {
   @IsEmail()
   email!: string;
@@ -39,6 +40,9 @@ export class AuthController {
     private readonly prisma: PrismaService
   ) {}
 
+  // ==================================================================
+  // LOGIN
+  // ==================================================================
   @HttpCode(200)
   @Post("login")
   async login(
@@ -55,9 +59,7 @@ export class AuthController {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    const { compare } = await import("bcryptjs");
-    const passwordMatch = await compare(password, admin.password);
-
+    const passwordMatch = await bcrypt.compare(password, admin.password);
     if (!passwordMatch) {
       throw new UnauthorizedException("Invalid credentials");
     }
@@ -73,7 +75,7 @@ export class AuthController {
       httpOnly: true,
       sameSite: "lax",
       secure: isProd,
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      maxAge: 1000 * 60 * 60 * 24 * 7,
     });
 
     return {
@@ -83,12 +85,18 @@ export class AuthController {
     };
   }
 
+  // ==================================================================
+  // AUTH ME
+  // ==================================================================
   @UseGuards(JwtAuthGuard)
   @Get("me")
   me(@Req() req: AuthenticatedRequest) {
     return req.user;
   }
 
+  // ==================================================================
+  // CHANGE PASSWORD (LOGGED IN USER)
+  // ==================================================================
   @UseGuards(JwtAuthGuard)
   @Patch("change-password")
   async changePassword(
@@ -105,14 +113,12 @@ export class AuthController {
       throw new UnauthorizedException("User not found");
     }
 
-    const { compare, hash } = await import("bcryptjs");
-    const oldMatch = await compare(oldPassword, admin.password);
-
+    const oldMatch = await bcrypt.compare(oldPassword, admin.password);
     if (!oldMatch) {
       throw new UnauthorizedException("Incorrect old password");
     }
 
-    const hashed = await hash(newPassword, 10);
+    const hashed = await bcrypt.hash(newPassword, 10);
 
     await this.prisma.admin.update({
       where: { id: admin.id },
@@ -122,6 +128,9 @@ export class AuthController {
     return { ok: true };
   }
 
+  // ==================================================================
+  // LOGOUT
+  // ==================================================================
   @Post("logout")
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie(process.env.COOKIE_NAME || "spex_token");

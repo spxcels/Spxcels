@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
 
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
@@ -6,10 +7,10 @@ import { AppService } from "./app.service";
 // 🔐 Authentication
 import { AuthModule } from "./auth/auth.module";
 
-// ⚙️ Prisma ORM (uses AdminConfig for dynamic DB url)
+// ⚙️ Prisma ORM
 import { PrismaModule } from "./prisma/prisma.module";
 
-// ⚙️ Admin Config module (must load BEFORE PrismaModule)
+// ⚙️ Admin Config module
 import { AdminConfigModule } from "./admin-config/admin-config.module";
 
 // 🛠 Auto admin system
@@ -17,13 +18,17 @@ import { AutoModule } from "./auto/auto.module";
 
 @Module({
   imports: [
+    // ⭐ Load environment variables FIRST
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env', // <-- CORRECT FIX
+    }),
+
     // Order matters!
-
-    AdminConfigModule, // ⭐ must load first (Prisma depends on it)
-    PrismaModule,      // ORM (dynamic DB URL enabled)
-    AuthModule,        // Login, JWT
-
-    AutoModule,        // Your admin auto API
+    AdminConfigModule, 
+    PrismaModule,
+    AuthModule,
+    AutoModule,
   ],
 
   controllers: [AppController],

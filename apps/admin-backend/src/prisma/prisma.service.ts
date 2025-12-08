@@ -4,30 +4,44 @@ import {
   INestApplication,
   Logger,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+
+import { PrismaClient } from '@spxcel/db';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
+    const databaseUrl = process.env.DATABASE_URL;
+
+    if (!databaseUrl || databaseUrl.trim() === '') {
+      throw new Error(
+        '❌ DATABASE_URL is missing or empty! Make sure .env is loaded.',
+      );
+    }
+
+    const pool = new Pool({
+      connectionString: databaseUrl,
+      ssl: { rejectUnauthorized: false },
+    });
+
+    const adapter = new PrismaPg(pool);
+
     super({
-      log: ['info', 'warn', 'error'], // optional
+      adapter,
+      log: ['info', 'warn', 'error'],
     });
   }
 
   async onModuleInit() {
     await this.$connect();
-    this.logger.log('🚀 Prisma Client connected');
+    this.logger.log('🚀 Prisma connected');
   }
 
-  /**
-   * Graceful shutdown using Node process hook
-   * (Prisma 5 removed $on("beforeExit") typings)
-   */
   async enableShutdownHooks(app: INestApplication) {
     process.on('beforeExit', async () => {
-      this.logger.log('🛑 Prisma Client disconnecting...');
       await this.$disconnect();
       await app.close();
     });

@@ -1,13 +1,9 @@
 // ====================================================================
-// 📦 Prisma Schema for Spxcel
-// Docs: https://pris.ly/d/prisma-schema
+// 📦 Prisma Schema for Spxcel (Optimized & Updated Version)
 // ====================================================================
 
 // --------------------------------------------------
 // 🧩 Prisma Client Generator
-// --------------------------------------------------
-// Output is redirected into /dist to support monorepo
-// (Next.js / Vercel require runtime JS, not TS source)
 // --------------------------------------------------
 generator client {
   provider = "prisma-client-js"
@@ -18,35 +14,59 @@ generator client {
 // --------------------------------------------------
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ====================================================================
 // 🔐 AUTH & ADMIN
 // ====================================================================
 
-// Admin configuration (Dynamic key-value store)
 model AdminConfig {
   id    Int    @id @default(autoincrement())
   key   String @unique
   value String
+
+  @@map("admin_config")
 }
 
-// Admin user
 model Admin {
   id        Int      @id @default(autoincrement())
   email     String   @unique
-  password  String // hashed password
+  password  String
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  resetTokens PasswordResetToken[]
+
+  @@index([email])
+  @@map("admins")
+}
+
+// --------------------------------------------------
+// 🔑 PASSWORD RESET SYSTEM (NEW)
+// --------------------------------------------------
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique // secure random 64-char token
+  adminId   Int
+  expiresAt DateTime // token expiry (15 minutes)
+  used      Boolean  @default(false) // prevent reuse
+  createdAt DateTime @default(now())
+
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([adminId])
+  @@map("password_reset_tokens")
 }
 
 // ====================================================================
-// 📱 PHONES: Brands, Models, Specs, Media, Affiliate Links
+// 📱 PHONE DATA STRUCTURE
 // ====================================================================
 
-// Brand (Samsung, Apple, Xiaomi, etc.)
+// ---------------------------
+// Brand
+// ---------------------------
 model PhoneBrand {
   id        Int      @id @default(autoincrement())
   name      String   @unique
@@ -55,11 +75,14 @@ model PhoneBrand {
   updatedAt DateTime @updatedAt
 
   models PhoneModel[]
+
+  @@index([slug])
+  @@map("phone_brands")
 }
 
-// --------------------------------------------------
-// Phone Model (Samsung S24, iPhone 16, etc.)
-// --------------------------------------------------
+// ---------------------------
+// Model
+// ---------------------------
 model PhoneModel {
   id        Int      @id @default(autoincrement())
   name      String
@@ -71,15 +94,20 @@ model PhoneModel {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  brand      PhoneBrand      @relation(fields: [brandId], references: [id])
+  brand      PhoneBrand      @relation(fields: [brandId], references: [id], onDelete: Cascade)
   specs      PhoneSpecs?
   media      PhoneMedia[]
   affiliates AffiliateLink[]
+
+  @@index([slug])
+  @@index([name])
+  @@index([brandId])
+  @@map("phone_models")
 }
 
-// --------------------------------------------------
-// Detailed Specifications
-// --------------------------------------------------
+// ---------------------------
+// Specifications
+// ---------------------------
 model PhoneSpecs {
   id              Int      @id @default(autoincrement())
   modelId         Int      @unique
@@ -111,12 +139,15 @@ model PhoneSpecs {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  model PhoneModel @relation(fields: [modelId], references: [id])
+  model PhoneModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([modelId])
+  @@map("phone_specs")
 }
 
-// --------------------------------------------------
-// Media (Images / Videos)
-// --------------------------------------------------
+// ---------------------------
+// Media
+// ---------------------------
 model PhoneMedia {
   id        Int       @id @default(autoincrement())
   modelId   Int
@@ -129,12 +160,15 @@ model PhoneMedia {
   duration  Float?
   createdAt DateTime  @default(now())
 
-  model PhoneModel @relation(fields: [modelId], references: [id])
+  model PhoneModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([modelId])
+  @@map("phone_media")
 }
 
-// --------------------------------------------------
-// Affiliate Links (Amazon, Flipkart, etc.)
-// --------------------------------------------------
+// ---------------------------
+// Affiliate Links
+// ---------------------------
 model AffiliateLink {
   id        Int      @id @default(autoincrement())
   modelId   Int
@@ -144,12 +178,16 @@ model AffiliateLink {
   currency  String?
   createdAt DateTime @default(now())
 
-  model PhoneModel @relation(fields: [modelId], references: [id])
+  model PhoneModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([modelId, storeName])
+  @@index([modelId])
+  @@map("affiliate_links")
 }
 
-// --------------------------------------------------
+// ====================================================================
 // Enums
-// --------------------------------------------------
+// ====================================================================
 enum MediaType {
   IMAGE
   VIDEO

@@ -6,6 +6,9 @@ import path from "path";
 export default defineConfig({
   plugins: [react()],
 
+  // ⭐ IMPORTANT: tell Vite your .env is inside THIS folder
+  envDir: "./",
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
