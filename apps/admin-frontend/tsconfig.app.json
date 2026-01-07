@@ -27,7 +27,8 @@
     /* REQUIRED for ShadCN UI */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@spxcel/ui": ["../../packages/ui/src"]
     }
   },
 

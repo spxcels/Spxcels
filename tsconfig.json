@@ -3,7 +3,7 @@
     "target": "ES2020",
     "module": "CommonJS",
     "moduleResolution": "Node",
-    
+
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -14,8 +14,12 @@
 
     "baseUrl": ".",
     "paths": {
+      "@/*": ["apps/admin-frontend/src/*"],
+
+      "@spxcel/ui": ["packages/ui/src"],
+      "@spxcel/ui/*": ["packages/ui/src/*"],
+
       "@spxcel/db": ["packages/db/dist"],
-      "@spxcel/ui": ["packages/ui/dist"],
       "@spxcel/utils": ["packages/utils/dist"]
     }
   }

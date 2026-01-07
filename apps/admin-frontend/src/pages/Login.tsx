@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { api } from "@/api/axios";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input, Button } from "@spxcel/ui";
 import { Eye, EyeOff } from "lucide-react";
 import clsx from "clsx";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth(); // ✅ USE CONTEXT
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +19,7 @@ export default function Login() {
 
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
-  const handleMouseMove = (e: any) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left - rect.width / 2;
     const y = e.clientY - rect.top - rect.height / 2;
@@ -31,10 +31,11 @@ export default function Login() {
   };
 
   const validateForm = () => {
-    const newErrors: any = {};
+    const newErrors: { email?: string; password?: string } = {};
 
     if (!email.trim()) newErrors.email = "Email is required";
-    else if (!/^\S+@\S+\.\S+$/.test(email)) newErrors.email = "Enter a valid email";
+    else if (!/^\S+@\S+\.\S+$/.test(email))
+      newErrors.email = "Enter a valid email";
 
     if (!password.trim()) newErrors.password = "Password is required";
 
@@ -52,22 +53,8 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // ⭐ FORCE AXIOS TO SEND JSON CORRECTLY ⭐
-      const res = await api.post(
-        "/auth/login",
-        { email, password },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          withCredentials: true,
-        }
-      );
-
-      if (res.status === 200) {
-        navigate("/admin/dashboard");
-      }
+      await login(email, password); // 🔥 THIS SETS AUTH STATE
+      navigate("/admin/dashboard"); // ✅ NOW PROTECTED ROUTE ALLOWS
     } catch (err: any) {
       setShake(true);
       setTimeout(() => setShake(false), 400);
@@ -100,22 +87,25 @@ export default function Login() {
           Admin Login
         </h1>
 
-        <div className="space-y-4">
-          {/* EMAIL */}
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleLogin();
+          }}
+        >
           <div>
             <Input
               className="text-white bg-gray-800 border-gray-600"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
             />
             {errors.email && (
               <p className="mt-1 text-sm text-red-400">{errors.email}</p>
             )}
           </div>
 
-          {/* PASSWORD */}
           <div>
             <div className="relative flex items-center">
               <Input
@@ -124,7 +114,6 @@ export default function Login() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
               />
 
               <button
@@ -142,13 +131,13 @@ export default function Login() {
           </div>
 
           <Button
+            type="submit"
             className="w-full bg-purple-600 hover:bg-purple-700 active:scale-95"
-            onClick={handleLogin}
             disabled={loading}
           >
             {loading ? "Logging in..." : "Login"}
           </Button>
-        </div>
+        </form>
       </div>
     </div>
   );
