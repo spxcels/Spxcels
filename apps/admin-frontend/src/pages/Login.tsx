@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth(); // ✅ USE CONTEXT
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,8 +53,8 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(email, password); // 🔥 THIS SETS AUTH STATE
-      navigate("/admin/dashboard"); // ✅ NOW PROTECTED ROUTE ALLOWS
+      await login(email, password);
+      navigate("/admin/dashboard");
     } catch (err: any) {
       setShake(true);
       setTimeout(() => setShake(false), 400);
@@ -89,7 +89,7 @@ export default function Login() {
 
         <form
           className="space-y-4"
-          onSubmit={(e) => {
+          onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
             e.preventDefault();
             handleLogin();
           }}
@@ -99,7 +99,9 @@ export default function Login() {
               className="text-white bg-gray-800 border-gray-600"
               placeholder="Email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setEmail(e.target.value)
+              }
             />
             {errors.email && (
               <p className="mt-1 text-sm text-red-400">{errors.email}</p>
@@ -113,7 +115,9 @@ export default function Login() {
                 placeholder="Password"
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setPassword(e.target.value)
+                }
               />
 
               <button

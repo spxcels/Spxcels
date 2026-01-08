@@ -7,7 +7,7 @@ export default function ForgotPassword() {
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!email) {
@@ -20,7 +20,7 @@ export default function ForgotPassword() {
     setSuccessMsg("");
 
     try {
-      const res = await axios.post(
+      await axios.post(
         `${import.meta.env.VITE_API_URL}/auth/forgot-password`,
         { email }
       );
@@ -46,29 +46,31 @@ export default function ForgotPassword() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email field */}
           <div>
-            <label className="block mb-1 text-sm text-white">Email Address</label>
+            <label className="block mb-1 text-sm text-white">
+              Email Address
+            </label>
             <input
               type="email"
               className="w-full p-3 text-white placeholder-gray-300 border rounded-lg bg-white/20 focus:outline-none border-white/20 focus:border-purple-400"
               placeholder="admin@spexcel.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setEmail(e.target.value)
+              }
             />
           </div>
 
-          {/* Error */}
           {errorMsg && (
             <p className="text-sm text-center text-red-400">{errorMsg}</p>
           )}
 
-          {/* Success */}
           {successMsg && (
-            <p className="text-sm text-center text-green-400">{successMsg}</p>
+            <p className="text-sm text-center text-green-400">
+              {successMsg}
+            </p>
           )}
 
-          {/* Submit */}
           <button
             disabled={loading}
             className="w-full py-3 font-medium text-white transition rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 disabled:opacity-50"
