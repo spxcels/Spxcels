@@ -9,6 +9,7 @@ ignoredBuiltDependencies:
 onlyBuiltDependencies:
   - '@prisma/client'
   - '@prisma/engines'
+  - bcrypt
   - esbuild
   - nx
   - prisma
