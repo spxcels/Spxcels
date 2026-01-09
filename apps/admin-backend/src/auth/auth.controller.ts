@@ -15,15 +15,14 @@ import type { Response } from "express";
 import { AuthService } from "./auth.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
-
 import type { AuthenticatedRequest } from "../types/auth-request";
 
 import { IsEmail, IsString, MinLength } from "class-validator";
-import bcrypt from "bcryptjs";
+import * as bcrypt from "bcrypt";
 
-// ------------------------------
+// ==============================
 // DTOs
-// ------------------------------
+// ==============================
 class LoginDto {
   @IsEmail()
   email!: string;
@@ -33,6 +32,16 @@ class LoginDto {
   password!: string;
 }
 
+class ChangePasswordDto {
+  @IsString()
+  @MinLength(1)
+  oldPassword!: string;
+
+  @IsString()
+  @MinLength(1)
+  newPassword!: string;
+}
+
 @Controller("auth")
 export class AuthController {
   constructor(
@@ -40,9 +49,9 @@ export class AuthController {
     private readonly prisma: PrismaService
   ) {}
 
-  // ==================================================================
+  // =====================================================
   // LOGIN
-  // ==================================================================
+  // =====================================================
   @HttpCode(200)
   @Post("login")
   async login(
@@ -71,11 +80,11 @@ export class AuthController {
 
     const isProd = process.env.NODE_ENV === "production";
 
-    res.cookie(process.env.COOKIE_NAME || "spex_token", token, {
+    res.cookie(process.env.COOKIE_NAME ?? "spex_token", token, {
       httpOnly: true,
       sameSite: "lax",
       secure: isProd,
-      maxAge: 1000 * 60 * 60 * 24 * 7,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
 
     return {
@@ -85,22 +94,22 @@ export class AuthController {
     };
   }
 
-  // ==================================================================
+  // =====================================================
   // AUTH ME
-  // ==================================================================
+  // =====================================================
   @UseGuards(JwtAuthGuard)
   @Get("me")
   me(@Req() req: AuthenticatedRequest) {
     return req.user;
   }
 
-  // ==================================================================
-  // CHANGE PASSWORD (LOGGED IN USER)
-  // ==================================================================
+  // =====================================================
+  // CHANGE PASSWORD (LOGGED-IN ADMIN)
+  // =====================================================
   @UseGuards(JwtAuthGuard)
   @Patch("change-password")
   async changePassword(
-    @Body() body: { oldPassword: string; newPassword: string },
+    @Body() body: ChangePasswordDto,
     @Req() req: AuthenticatedRequest
   ) {
     const { oldPassword, newPassword } = body;
@@ -118,22 +127,22 @@ export class AuthController {
       throw new UnauthorizedException("Incorrect old password");
     }
 
-    const hashed = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await this.prisma.admin.update({
       where: { id: admin.id },
-      data: { password: hashed },
+      data: { password: hashedPassword },
     });
 
     return { ok: true };
   }
 
-  // ==================================================================
+  // =====================================================
   // LOGOUT
-  // ==================================================================
+  // =====================================================
   @Post("logout")
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie(process.env.COOKIE_NAME || "spex_token");
+    res.clearCookie(process.env.COOKIE_NAME ?? "spex_token");
     return { ok: true };
   }
 }
