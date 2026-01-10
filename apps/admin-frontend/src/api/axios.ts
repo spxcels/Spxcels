@@ -1,20 +1,16 @@
-import { api } from "./axios";
+import axios from "axios";
 
-export async function login(email: string, password: string) {
-  const res = await api.post("/auth/login", { email, password });
-  return res.data;
-}
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
 
-export async function getMe() {
-  try {
-    const res = await api.get("/auth/me");
-    return res.data;
-  } catch {
-    return null;
-  }
-}
-
-export async function logout() {
-  const res = await api.post("/auth/logout");
-  return res.data;
-}
+// DO NOT redirect inside interceptor
+api.interceptors.response.use(
+  (response) => response,
+  (error) => Promise.reject(error)
+);
