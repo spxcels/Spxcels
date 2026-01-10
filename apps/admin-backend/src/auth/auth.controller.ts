@@ -78,12 +78,11 @@ export class AuthController {
       email: admin.email,
     });
 
-    const isProd = process.env.NODE_ENV === "production";
-
+    // 🔑 CRITICAL FIX: cross-site cookie
     res.cookie(process.env.COOKIE_NAME ?? "spex_token", token, {
       httpOnly: true,
-      sameSite: "lax",
-      secure: isProd,
+      sameSite: "none", // ✅ REQUIRED for Vercel ↔ Render
+      secure: true,     // ✅ REQUIRED when sameSite = none
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
 
@@ -142,7 +141,10 @@ export class AuthController {
   // =====================================================
   @Post("logout")
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie(process.env.COOKIE_NAME ?? "spex_token");
+    res.clearCookie(process.env.COOKIE_NAME ?? "spex_token", {
+      sameSite: "none",
+      secure: true,
+    });
     return { ok: true };
   }
 }
