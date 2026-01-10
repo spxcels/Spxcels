@@ -15,7 +15,7 @@ async function bootstrap() {
   app.use(json({ limit: "10mb" }));
   app.use(urlencoded({ extended: true, limit: "10mb" }));
 
-  // Load DATABASE_URL from AdminConfig (optional dynamic config)
+  // Load DATABASE_URL from AdminConfig
   try {
     const adminConfigService = app.get(AdminConfigService);
     const dbConfig = await adminConfigService.getDbUrl();
@@ -23,11 +23,9 @@ async function bootstrap() {
     if (dbConfig?.value) {
       console.log("🔄 Using DATABASE_URL from AdminConfig");
       process.env.DATABASE_URL = dbConfig.value;
-    } else {
-      console.log("⚠️ Using default DATABASE_URL");
     }
-  } catch (err) {
-    console.error("⚠️ AdminConfig not available yet, using default DATABASE_URL");
+  } catch {
+    console.warn("⚠️ Using default DATABASE_URL");
   }
 
   // Prisma
@@ -35,14 +33,14 @@ async function bootstrap() {
   await prismaService.$connect();
   await prismaService.enableShutdownHooks(app);
 
-  // CORS
+  // ✅ CORS — EXPLICIT, NO GUESSING
   app.enableCors({
     origin: [
-      process.env.ADMIN_FRONTEND_URL,
-      process.env.WEB_FRONTEND_URL,
-      "http://localhost:5173",
-    ].filter(Boolean),
+      "https://spxcel-admin-frontend.vercel.app", // ✅ PROD
+      "http://localhost:5173",                    // ✅ DEV
+    ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   });
 
   // Cookies
@@ -56,10 +54,7 @@ async function bootstrap() {
     })
   );
 
-  // PORT for Render
-  const port = process.env.PORT || 3000;
-
-  // IMPORTANT: Bind to 0.0.0.0 for Render
+  const port = process.env.PORT || 10000;
   await app.listen(port, "0.0.0.0");
 
   console.log(`🚀 Backend running on port ${port}`);
