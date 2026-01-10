@@ -1,12 +1,8 @@
 import { api } from "./axios";
 
 export async function login(email: string, password: string) {
-  try {
-    const res = await api.post("/auth/login", { email, password });
-    return res.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Login failed");
-  }
+  const res = await api.post("/auth/login", { email, password });
+  return res.data;
 }
 
 export async function getMe() {
@@ -14,7 +10,7 @@ export async function getMe() {
     const res = await api.get("/auth/me");
     return res.data;
   } catch {
-    return null; // not logged in
+    return null;
   }
 }
 
@@ -22,4 +18,3 @@ export async function logout() {
   const res = await api.post("/auth/logout");
   return res.data;
 }
-
