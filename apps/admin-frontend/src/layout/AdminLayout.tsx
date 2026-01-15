@@ -4,10 +4,10 @@ import { Outlet } from "react-router-dom";
 
 export default function AdminLayout() {
   return (
-    <div className="flex min-h-screen bg-[#0d0d0d] text-gray-200 overflow-hidden">
-
-      {/* Sidebar */}
-      <aside className="hidden md:flex">
+    <div className="flex h-screen bg-[#0d0d0d] text-gray-200 overflow-hidden">
+      
+      {/* DESKTOP SIDEBAR */}
+      <aside className="hidden h-screen md:block">
         <Sidebar />
       </aside>
 
@@ -16,15 +16,17 @@ export default function AdminLayout() {
         <Sidebar />
       </div>
 
-      {/* MAIN CONTENT */}
-      <div className="flex flex-col flex-1 min-w-0">
+      {/* MAIN AREA */}
+      <div className="flex flex-col flex-1 h-screen min-w-0">
 
-        {/* TOP NAV */}
+        {/* NAVBAR */}
         <Navbar />
 
-        {/* MAIN PAGE CONTENT */}
-        <main className="w-full p-4 mx-auto overflow-x-hidden sm:p-6 lg:p-8 max-w-7xl">
-          <Outlet />   {/* <-- REQUIRED: renders child routes */}
+        {/* SCROLLABLE PAGE CONTENT */}
+        <main className="flex-1 p-4 overflow-x-hidden overflow-y-auto sm:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl">
+            <Outlet />
+          </div>
         </main>
 
       </div>
