@@ -5,6 +5,7 @@ interface User {
   id: number;
   email: string;
   name?: string;
+  avatar?: string | null; // ✅ ADDED
 }
 
 interface AuthContextType {
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             id: u.id,
             email: u.email,
             name: u.name ?? "",
+            avatar: u.avatar ?? null, // ✅ ADDED
           });
         } else {
           setUser(null);
@@ -59,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: data.id,
       email: data.email,
       name: data.name ?? "",
+      avatar: data.avatar ?? null, // ✅ ADDED
     });
   };
 

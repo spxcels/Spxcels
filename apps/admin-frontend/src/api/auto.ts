@@ -53,4 +53,27 @@ export const auto = {
       )
       .then(res => res.data);
   },
+
+  // ===============================
+  // SETTINGS / ADMIN CONFIG
+  // ===============================
+
+  getDbUrl() {
+    return api.get("/admin/config/db-url").then(res => res.data);
+  },
+
+  updateDbUrl(dbUrl: string) {
+    return api
+      .put("/admin/config/db-url", { url: dbUrl })
+      .then(res => res.data);
+  },
+
+  changePassword(oldPassword: string, newPassword: string) {
+    return api
+      .patch("/auth/change-password", {
+        currentPassword: oldPassword,
+        newPassword,
+      })
+      .then(res => res.data);
+  },
 };

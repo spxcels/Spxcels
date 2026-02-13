@@ -13,7 +13,7 @@ import type { PhoneSpecsDraft } from "./sections/SpecsSection";
 ========================= */
 
 export type PhoneModelDraft = {
-  brandId: number | "";
+  brandId: number | null;
   name: string;
   slug: string;
   colors: string;
@@ -51,18 +51,21 @@ export default function NewPhoneModel() {
 
   /* ---------- FORM STATE ---------- */
   const [form, setForm] = useState<PhoneModelDraft>({
-    brandId: "",
+    brandId: null,
     name: "",
     slug: "",
     colors: "",
     variants: "",
   });
 
-  /* ---------- SPECS (PRISMA SHAPE) ---------- */
-  const [specs, setSpecs] = useState<PhoneSpecsDraft>({});
+  /* ---------- SPECS ---------- */
+  const [specs, setSpecs] = useState<PhoneSpecsDraft>(
+    {}
+  );
 
   /* ---------- CARD IMAGE ---------- */
-  const [cardFile, setCardFile] = useState<File | null>(null);
+  const [cardFile, setCardFile] =
+    useState<File | null>(null);
   const [cardPreview, setCardPreview] =
     useState<string | null>(null);
 
@@ -87,7 +90,10 @@ export default function NewPhoneModel() {
 
   useEffect(() => {
     if (!form.name) {
-      setForm((prev) => ({ ...prev, slug: "" }));
+      setForm((prev) => ({
+        ...prev,
+        slug: "",
+      }));
       return;
     }
 
@@ -119,7 +125,10 @@ export default function NewPhoneModel() {
     key: K,
     value: PhoneModelDraft[K]
   ) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
   const updateSpecs = <
@@ -128,7 +137,10 @@ export default function NewPhoneModel() {
     key: K,
     value: PhoneSpecsDraft[K]
   ) => {
-    setSpecs((prev) => ({ ...prev, [key]: value }));
+    setSpecs((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
   /* =========================
@@ -150,15 +162,18 @@ export default function NewPhoneModel() {
 
     try {
       /* 1️⃣ Create Phone Model */
-      const model = await auto.create("phone_models", {
-        brandId: Number(form.brandId),
-        name: form.name.trim(),
-        slug: slugify(form.slug || form.name),
-        colors: toArray(form.colors),
-        variants: toArray(form.variants),
-      });
+      const model = await auto.create(
+        "phone_models",
+        {
+          brandId: form.brandId,
+          name: form.name.trim(),
+          slug: slugify(form.slug || form.name),
+          colors: toArray(form.colors),
+          variants: toArray(form.variants),
+        }
+      );
 
-      /* 2️⃣ Create Phone Specs (ONE row) */
+      /* 2️⃣ Create Specs */
       await auto.create("phone_specs", {
         modelId: model.id,
         ...specs,
@@ -178,7 +193,10 @@ export default function NewPhoneModel() {
         `/admin/products/phones/model/${model.id}/media`
       );
     } catch (err) {
-      console.error("Failed to create phone model", err);
+      console.error(
+        "Failed to create phone model",
+        err
+      );
       alert("Failed to create phone model");
     } finally {
       setSaving(false);
