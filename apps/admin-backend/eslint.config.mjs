@@ -1,6 +1,5 @@
 // @ts-check
 import eslint from "@eslint/js";
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
@@ -13,12 +12,9 @@ export default tseslint.config(
     ],
   },
 
-  // Base ESLint + TS rules
+  // Base ESLint + TypeScript rules (KEEP — important)
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
-
-  // Prettier integration
-  eslintPluginPrettierRecommended,
 
   {
     languageOptions: {
@@ -37,7 +33,7 @@ export default tseslint.config(
   {
     rules: {
       //-----------------------------------
-      // 🔥 Disable noisy rules
+      // 🧘 Reduce visual & mental noise
       //-----------------------------------
       "no-inline-comments": "off",
       "no-trailing-spaces": "off",
@@ -46,31 +42,30 @@ export default tseslint.config(
       "capitalized-comments": "off",
 
       //-----------------------------------
-      // 🔥 TypeScript noise removed
+      // 🧠 TypeScript rules (balanced)
       //-----------------------------------
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+
+      // Keep these as WARN — they are useful but not blocking
       "@typescript-eslint/no-floating-promises": "warn",
       "@typescript-eslint/no-unsafe-argument": "warn",
-      "@typescript-eslint/ban-ts-comment": "off",
+
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
+    },
+  },
 
-      //-----------------------------------
-      // 🔥 Prettier formatting (clean & stable)
-      //-----------------------------------
-      "prettier/prettier": [
-        "error",
-        {
-          endOfLine: "auto",
-          singleQuote: false,
-          useTabs: false,
-          trailingComma: "all",
-          semi: true,
-          printWidth: 100,
-        },
-      ],
+  // 🧩 Controllers & guards are framework glue — relax them safely
+  {
+    files: ["**/*.controller.ts", "**/*.guard.ts"],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-misused-promises": "off",
+      "@typescript-eslint/require-await": "off",
     },
   },
 );

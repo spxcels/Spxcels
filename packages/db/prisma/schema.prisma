@@ -1,5 +1,6 @@
 // ====================================================================
-// 📦 Prisma Schema for Spxcel (Optimized & Updated Version)
+// 📦 Prisma Schema for Spxcel
+// FINAL – Clean Card Image + Media Slider Architecture
 // ====================================================================
 
 // --------------------------------------------------
@@ -42,15 +43,12 @@ model Admin {
   @@map("admins")
 }
 
-// --------------------------------------------------
-// 🔑 PASSWORD RESET SYSTEM (NEW)
-// --------------------------------------------------
 model PasswordResetToken {
   id        Int      @id @default(autoincrement())
-  token     String   @unique // secure random 64-char token
+  token     String   @unique
   adminId   Int
-  expiresAt DateTime // token expiry (15 minutes)
-  used      Boolean  @default(false) // prevent reuse
+  expiresAt DateTime
+  used      Boolean  @default(false)
   createdAt DateTime @default(now())
 
   admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
@@ -81,22 +79,26 @@ model PhoneBrand {
 }
 
 // ---------------------------
-// Model
+// Phone Model
+// ⭐ ONE CARD IMAGE PER MODEL
 // ---------------------------
 model PhoneModel {
-  id        Int      @id @default(autoincrement())
-  name      String
-  slug      String   @unique
-  image     String?
-  colors    String[]
-  variants  String[]
-  brandId   Int
+  id   Int    @id @default(autoincrement())
+  name String
+  slug String @unique
+
+  image String? // ⭐ CARD / LISTING IMAGE (ONLY ONE)
+
+  colors   String[]
+  variants String[]
+  brandId  Int
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   brand      PhoneBrand      @relation(fields: [brandId], references: [id], onDelete: Cascade)
   specs      PhoneSpecs?
-  media      PhoneMedia[]
+  media      PhoneMedia[] // ⭐ ALL SLIDER IMAGES
   affiliates AffiliateLink[]
 
   @@index([slug])
@@ -109,8 +111,9 @@ model PhoneModel {
 // Specifications
 // ---------------------------
 model PhoneSpecs {
-  id              Int      @id @default(autoincrement())
-  modelId         Int      @unique
+  id      Int @id @default(autoincrement())
+  modelId Int @unique
+
   os              String?
   chipset         String?
   cpu             String?
@@ -136,8 +139,9 @@ model PhoneSpecs {
   buildMaterial   String?
   releaseDate     String?
   otherFeatures   String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   model PhoneModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
@@ -146,19 +150,20 @@ model PhoneSpecs {
 }
 
 // ---------------------------
-// Media
+// Media (⭐ SLIDER ONLY)
 // ---------------------------
 model PhoneMedia {
-  id        Int       @id @default(autoincrement())
-  modelId   Int
-  url       String
-  publicId  String?
-  type      MediaType
-  alt       String?
-  width     Int?
-  height    Int?
-  duration  Float?
-  createdAt DateTime  @default(now())
+  id      Int @id @default(autoincrement())
+  modelId Int
+
+  url      String
+  publicId String?
+  type     MediaType
+
+  order Int? // ⭐ optional slider ordering
+  alt   String?
+
+  createdAt DateTime @default(now())
 
   model PhoneModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
@@ -186,8 +191,9 @@ model AffiliateLink {
 }
 
 // ====================================================================
-// Enums
+// ENUMS
 // ====================================================================
+
 enum MediaType {
   IMAGE
   VIDEO

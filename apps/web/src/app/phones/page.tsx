@@ -1,4 +1,4 @@
-import prisma from "@spxcel/db";
+import { prisma } from "@spxcel/db";
 import PhonesPage from "./PhonesPage";
 
 export default async function Page() {

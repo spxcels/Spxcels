@@ -15,9 +15,9 @@ export class AuthService {
     private readonly jwtService: JwtService
   ) {}
 
-  // --------------------------------------------------
-  // VALIDATE ADMIN CREDENTIALS
-  // --------------------------------------------------
+  // ==================================================
+  // 🔐 VALIDATE ADMIN CREDENTIALS
+  // ==================================================
   async validateAdmin(email: string, password: string) {
     const admin = await this.prisma.admin.findUnique({
       where: { email },
@@ -43,23 +43,23 @@ export class AuthService {
     };
   }
 
-  // --------------------------------------------------
-  // LOGIN → CREATE JWT TOKEN
-  // --------------------------------------------------
-  login(admin: AdminPayload) {
+  // ==================================================
+  // 🔑 LOGIN → CREATE JWT TOKEN
+  // IMPORTANT FIX:
+  // Return STRING token (not object)
+  // ==================================================
+  login(admin: AdminPayload): string {
     const payload = {
       sub: admin.id,
       email: admin.email,
     };
 
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    return this.jwtService.sign(payload);
   }
 
-  // --------------------------------------------------
-  // VERIFY JWT TOKEN + RETURN PAYLOAD
-  // --------------------------------------------------
+  // ==================================================
+  // 🔎 VERIFY TOKEN
+  // ==================================================
   getAdminFromToken(token: string) {
     try {
       return this.jwtService.verify(token) as {

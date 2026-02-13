@@ -1,133 +1,161 @@
 import {
   Controller,
   Get,
-  Param,
   Post,
   Put,
   Delete,
+  Param,
   Body,
   BadRequestException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { Prisma } from "@prisma/client";
 
-function safeTable(name: string) {
-  if (!/^[a-zA-Z0-9_]+$/.test(name))
-    throw new BadRequestException("Invalid table");
-  return name;
+/* ============================================
+   HELPERS
+============================================ */
+
+function safeTableName(name: string) {
+  if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+    throw new BadRequestException("Invalid table name");
+  }
+  return Prisma.raw(`"${name}"`);
 }
+
+function safeId(id: string) {
+  if (!/^\d+$/.test(id)) {
+    throw new BadRequestException("Invalid ID");
+  }
+  return Number(id);
+}
+
+function sqlValue(value: any) {
+  if (value === null || value === undefined) {
+    return Prisma.sql`NULL`;
+  }
+
+  if (Array.isArray(value)) {
+    return Prisma.sql`ARRAY[${Prisma.join(value.map(v => Prisma.sql`${v}`))}]`;
+  }
+
+  return Prisma.sql`${value}`;
+}
+
+/* ============================================
+   CONTROLLER
+============================================ */
 
 @Controller("auto/data")
 export class DataController {
   constructor(private prisma: PrismaService) {}
 
-  // ============================================
-  // GET ALL ROWS
-  // ============================================
+  /* ============================================
+     GET ALL
+  ============================================ */
   @Get(":table")
   async getAll(@Param("table") table: string) {
-    table = safeTable(table);
-    const rows = await this.prisma.$queryRawUnsafe<any[]>(`
+    const t = safeTableName(table);
+
+    return this.prisma.$queryRaw<any[]>`
       SELECT *
-      FROM "${table}"
+      FROM ${t}
       ORDER BY id DESC
       LIMIT 200
-    `);
-    return rows;
+    `;
   }
 
-  // ============================================
-  // GET SINGLE ROW
-  // ============================================
+  /* ============================================
+     GET ONE
+  ============================================ */
   @Get(":table/:id")
   async getOne(@Param("table") table: string, @Param("id") id: string) {
-    table = safeTable(table);
+    const t = safeTableName(table);
+    const rowId = safeId(id);
 
-    if (!/^\d+$/.test(id)) throw new BadRequestException("Invalid ID");
-
-    const rows = await this.prisma.$queryRawUnsafe<any[]>(`
+    const rows = await this.prisma.$queryRaw<any[]>`
       SELECT *
-      FROM "${table}"
-      WHERE id = ${Number(id)}
+      FROM ${t}
+      WHERE id = ${rowId}
       LIMIT 1
-    `);
-
-    return rows.length ? rows[0] : null;
-  }
-
-  // ============================================
-  // CREATE ROW
-  // ============================================
-  @Post(":table")
-  async create(@Param("table") table: string, @Body() data: any) {
-    table = safeTable(table);
-
-    const keys = Object.keys(data);
-    if (keys.length === 0) throw new BadRequestException("Empty body");
-
-    const cols = keys.map((k) => `"${k}"`).join(", ");
-    const vals = keys
-      .map((k) =>
-        data[k] === null || data[k] === undefined
-          ? "NULL"
-          : `'${String(data[k]).replace(/'/g, "''")}'`
-      )
-      .join(", ");
-
-    const rows = await this.prisma.$queryRawUnsafe<any[]>(`
-      INSERT INTO "${table}" (${cols})
-      VALUES (${vals})
-      RETURNING *;
-    `);
-
-    return rows[0];
-  }
-
-  // ============================================
-  // UPDATE ROW
-  // ============================================
-  @Put(":table/:id")
-  async update(
-    @Param("table") table: string,
-    @Param("id") id: string,
-    @Body() data: any
-  ) {
-    table = safeTable(table);
-
-    if (!/^\d+$/.test(id)) throw new BadRequestException("Invalid ID");
-
-    const keys = Object.keys(data);
-    const set = keys
-      .map((k) =>
-        data[k] === null || data[k] === undefined
-          ? `"${k}" = NULL`
-          : `"${k}" = '${String(data[k]).replace(/'/g, "''")}'`
-      )
-      .join(", ");
-
-    const rows = await this.prisma.$queryRawUnsafe<any[]>(`
-      UPDATE "${table}"
-      SET ${set}
-      WHERE id = ${Number(id)}
-      RETURNING *;
-    `);
+    `;
 
     return rows[0] ?? null;
   }
 
-  // ============================================
-  // DELETE ROW
-  // ============================================
+  /* ============================================
+     CREATE
+  ============================================ */
+  @Post(":table")
+  async create(@Param("table") table: string, @Body() data: Record<string, any>) {
+    if (!data || Object.keys(data).length === 0) {
+      throw new BadRequestException("Empty body");
+    }
+
+    const t = safeTableName(table);
+
+    // ensure timestamps
+    data.createdAt ??= new Date();
+    data.updatedAt ??= new Date();
+
+    const columns = Object.keys(data).map(k => Prisma.raw(`"${k}"`));
+    const values = Object.values(data).map(sqlValue);
+
+    const rows = await this.prisma.$queryRaw<any[]>`
+      INSERT INTO ${t} (${Prisma.join(columns)})
+      VALUES (${Prisma.join(values)})
+      RETURNING *
+    `;
+
+    return rows[0];
+  }
+
+  /* ============================================
+     UPDATE
+  ============================================ */
+  @Put(":table/:id")
+  async update(
+    @Param("table") table: string,
+    @Param("id") id: string,
+    @Body() data: Record<string, any>
+  ) {
+    if (!data || Object.keys(data).length === 0) {
+      throw new BadRequestException("Empty body");
+    }
+
+    const t = safeTableName(table);
+    const rowId = safeId(id);
+
+    // force updatedAt
+    data.updatedAt = new Date();
+
+    const updates = Object.entries(data).map(
+      ([key, value]) =>
+        Prisma.sql`${Prisma.raw(`"${key}"`)} = ${sqlValue(value)}`
+    );
+
+    const rows = await this.prisma.$queryRaw<any[]>`
+      UPDATE ${t}
+      SET ${Prisma.join(updates)}
+      WHERE id = ${rowId}
+      RETURNING *
+    `;
+
+    return rows[0] ?? null;
+  }
+
+  /* ============================================
+     DELETE
+  ============================================ */
   @Delete(":table/:id")
   async delete(@Param("table") table: string, @Param("id") id: string) {
-    table = safeTable(table);
+    const t = safeTableName(table);
+    const rowId = safeId(id);
 
-    if (!/^\d+$/.test(id)) throw new BadRequestException("Invalid ID");
-
-    const rows = await this.prisma.$queryRawUnsafe<any[]>(`
-      DELETE FROM "${table}"
-      WHERE id = ${Number(id)}
-      RETURNING *;
-    `);
+    const rows = await this.prisma.$queryRaw<any[]>`
+      DELETE FROM ${t}
+      WHERE id = ${rowId}
+      RETURNING *
+    `;
 
     return rows[0] ?? null;
   }

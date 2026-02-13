@@ -1,56 +1,47 @@
+import { Sun, Moon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
+import { AvatarMenu } from "@/components/user";
 
 export default function Navbar() {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <header
-      className="
-        sticky top-0 z-30
-        w-full px-8 py-4
-        bg-[#0b0b0b]/80 
-        backdrop-blur-xl 
-        border-b border-gray-800
-        shadow-lg
-        flex items-center gap-3
-      "
-    >
-      {/* ONLINE INDICATOR */}
-      {user && (
-        <span
-          className="
-            w-3 h-3 rounded-full 
-            bg-green-500 
-            shadow-[0_0_8px_rgba(0,255,0,0.9)]
-            animate-online-pulse
-            relative top-[2px]
-          "
-        />
-      )}
+    <header className="sticky top-0 z-30 flex items-center justify-between w-full px-6 py-4 bg-white border-b border-gray-200 dark:bg-zinc-900 dark:border-zinc-800">
+      
+      {/* LEFT: USER INFO */}
+      <div className="flex items-center gap-3">
+        {user && (
+          <span
+            className="w-2.5 h-2.5 rounded-full bg-green-500"
+            title="Online"
+          />
+        )}
 
-      {/* USER EMAIL */}
-      <h1
-        className="
-          text-2xl font-semibold 
-          text-transparent  
-          bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text
-          drop-shadow-[0_0_8px_rgba(255,0,255,0.6)]
-        "
-      >
-        {user ? user.email : "Loading..."}
-      </h1>
+        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+          {user ? user.email : "Loading..."}
+        </span>
+      </div>
 
-      <style>
-        {`
-          @keyframes onlinePulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.6; }
-          }
-          .animate-online-pulse {
-            animation: onlinePulse 1.5s ease-in-out infinite;
-          }
-        `}
-      </style>
+      {/* RIGHT: ACTIONS */}
+      <div className="flex items-center gap-3">
+        {/* AVATAR MENU */}
+        <AvatarMenu />
+
+        {/* THEME TOGGLE */}
+        <button
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+          className="p-2 transition bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+        >
+          {theme === "dark" ? (
+            <Sun size={18} className="text-yellow-400" />
+          ) : (
+            <Moon size={18} className="text-gray-700" />
+          )}
+        </button>
+      </div>
     </header>
   );
 }

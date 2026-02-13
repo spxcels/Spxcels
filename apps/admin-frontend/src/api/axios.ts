@@ -1,16 +1,21 @@
 import axios from "axios";
 
-export const api = axios.create({
+const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
+  withCredentials: true, // 🔥 VERY IMPORTANT
   headers: {
-    "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
 
-// DO NOT redirect inside interceptor
 api.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(error)
+  (error) => {
+    if (error.response?.status === 401) {
+      console.log("Unauthorized request.");
+    }
+    return Promise.reject(error);
+  }
 );
+
+export default api;

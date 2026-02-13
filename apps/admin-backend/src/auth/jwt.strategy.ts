@@ -16,7 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         (req: Request | undefined): string | null => {
-          const cookieName = process.env.COOKIE_NAME || "spex_token";
+          const cookieName = process.env.COOKIE_NAME || "spxcel_token";
           const token = req?.cookies?.[cookieName];
           return typeof token === "string" ? token : null;
         },

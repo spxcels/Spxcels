@@ -20,9 +20,10 @@ import type { AuthenticatedRequest } from "../types/auth-request";
 import { IsEmail, IsString, MinLength } from "class-validator";
 import * as bcrypt from "bcrypt";
 
-// ==============================
-// DTOs
-// ==============================
+/* =====================================================
+   DTOs
+===================================================== */
+
 class LoginDto {
   @IsEmail()
   email!: string;
@@ -42,6 +43,10 @@ class ChangePasswordDto {
   newPassword!: string;
 }
 
+/* =====================================================
+   CONTROLLER
+===================================================== */
+
 @Controller("auth")
 export class AuthController {
   constructor(
@@ -49,9 +54,10 @@ export class AuthController {
     private readonly prisma: PrismaService
   ) {}
 
-  // =====================================================
-  // LOGIN
-  // =====================================================
+  /* =====================================================
+     LOGIN
+  ===================================================== */
+
   @HttpCode(200)
   @Post("login")
   async login(
@@ -69,6 +75,7 @@ export class AuthController {
     }
 
     const passwordMatch = await bcrypt.compare(password, admin.password);
+
     if (!passwordMatch) {
       throw new UnauthorizedException("Invalid credentials");
     }
@@ -78,12 +85,13 @@ export class AuthController {
       email: admin.email,
     });
 
-    // 🔑 CRITICAL FIX: cross-site cookie
-    res.cookie(process.env.COOKIE_NAME ?? "spex_token", token, {
+    // 🔥 DEV COOKIE SETTINGS (WORKS WITH DIFFERENT PORTS)
+    res.cookie(process.env.COOKIE_NAME ?? "spxcel_token", token, {
       httpOnly: true,
-      sameSite: "none", // ✅ REQUIRED for Vercel ↔ Render
-      secure: true,     // ✅ REQUIRED when sameSite = none
+      sameSite: "none", // ⭐ REQUIRED for cross-origin (5173 → 3000)
+      secure: false,    // ⭐ false for localhost
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      path: "/",
     });
 
     return {
@@ -93,18 +101,20 @@ export class AuthController {
     };
   }
 
-  // =====================================================
-  // AUTH ME
-  // =====================================================
+  /* =====================================================
+     AUTH ME
+  ===================================================== */
+
   @UseGuards(JwtAuthGuard)
   @Get("me")
   me(@Req() req: AuthenticatedRequest) {
     return req.user;
   }
 
-  // =====================================================
-  // CHANGE PASSWORD (LOGGED-IN ADMIN)
-  // =====================================================
+  /* =====================================================
+     CHANGE PASSWORD
+  ===================================================== */
+
   @UseGuards(JwtAuthGuard)
   @Patch("change-password")
   async changePassword(
@@ -122,6 +132,7 @@ export class AuthController {
     }
 
     const oldMatch = await bcrypt.compare(oldPassword, admin.password);
+
     if (!oldMatch) {
       throw new UnauthorizedException("Incorrect old password");
     }
@@ -136,15 +147,18 @@ export class AuthController {
     return { ok: true };
   }
 
-  // =====================================================
-  // LOGOUT
-  // =====================================================
+  /* =====================================================
+     LOGOUT
+  ===================================================== */
+
   @Post("logout")
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie(process.env.COOKIE_NAME ?? "spex_token", {
+    res.clearCookie(process.env.COOKIE_NAME ?? "spxcel_token", {
       sameSite: "none",
-      secure: true,
+      secure: false,
+      path: "/",
     });
+
     return { ok: true };
   }
 }

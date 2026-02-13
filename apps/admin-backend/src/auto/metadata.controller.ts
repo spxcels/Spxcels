@@ -1,25 +1,21 @@
 import { Controller, Get } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
 
 @Controller("auto/metadata")
 export class MetadataController {
-  constructor(private prisma: PrismaService) {}
+  /**
+   * TEMPORARY SAFE METADATA
+   * -----------------------
+   * Disabled raw introspection queries to avoid DB timeouts.
+   * We will re-introduce controlled metadata later.
+   */
 
   @Get("tables")
   async getTables() {
-    return await this.prisma.$queryRawUnsafe(`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema='public' AND table_type='BASE TABLE'
-    `);
+    return [];
   }
 
   @Get("columns")
   async getColumns() {
-    return await this.prisma.$queryRawUnsafe(`
-      SELECT table_name, column_name, data_type, is_nullable
-      FROM information_schema.columns
-      WHERE table_schema='public'
-    `);
+    return [];
   }
 }

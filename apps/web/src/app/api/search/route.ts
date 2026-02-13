@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Fuse from "fuse.js";
-import prisma from "@spxcel/db";
+import { prisma } from "@spxcel/db";
 
 export async function GET(req: Request) {
   try {

@@ -10,27 +10,43 @@ import { AuthModule } from "./auth/auth.module";
 // ⚙️ Prisma ORM
 import { PrismaModule } from "./prisma/prisma.module";
 
-// ⚙️ Admin Config module
+// ⚙️ Admin Config
 import { AdminConfigModule } from "./admin-config/admin-config.module";
 
-// 🛠 Auto admin system
+// 🛠 Auto Admin System
 import { AutoModule } from "./auto/auto.module";
+
+// 🧠 Admin (phones, media, etc.)
+import { AdminModule } from "./admin/admin.module";
 
 @Module({
   imports: [
-    // ⭐ Load environment variables FIRST
+    /**
+     * ✅ LOAD ENV VARIABLES FIRST
+     * - Automatically loads .env from process cwd
+     * - Required for Cloudinary, JWT, DB, etc.
+     */
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env', // <-- CORRECT FIX
     }),
 
-    // Order matters!
-    AdminConfigModule, 
+    /**
+     * ⚙️ Core modules
+     */
     PrismaModule,
     AuthModule,
-    AutoModule,
-  ],
 
+    /**
+     * 🛠 Admin tools
+     */
+    AdminConfigModule,
+    AutoModule,
+
+    /**
+     * 🧠 Domain Admin (phones, models, media)
+     */
+    AdminModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

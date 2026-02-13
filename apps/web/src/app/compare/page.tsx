@@ -106,8 +106,8 @@ export default function ComparePage() {
   const isMaxSelected = selectedDevices.length >= MAX_DEVICES;
 
   return (
-    <div className="p-4 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100 text-center">
+    <div className="p-4 mx-auto max-w-7xl">
+      <h1 className="mb-6 text-3xl font-bold text-center text-gray-900 dark:text-gray-100">
         Compare Devices
       </h1>
 
@@ -136,7 +136,7 @@ export default function ComparePage() {
         {dropdownOpen && !isMaxSelected && (
           <div
             ref={resultsRef}
-            className="absolute bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 w-full mt-1 rounded-md z-10 max-h-60 overflow-auto shadow-md"
+            className="absolute z-10 w-full mt-1 overflow-auto bg-white border border-gray-300 rounded-md shadow-md dark:bg-gray-800 dark:border-gray-700 max-h-60"
           >
             {filteredDevices.length > 0 ? (
               filteredDevices.map((device, index) => (
@@ -162,7 +162,7 @@ export default function ComparePage() {
 
       {/* Compare Layout */}
       {selectedDevices.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 border border-gray-300 dark:border-gray-700 rounded-lg shadow-md overflow-hidden">
+        <div className="grid grid-cols-2 gap-4 overflow-hidden border border-gray-300 rounded-lg shadow-md dark:border-gray-700">
           {selectedDevices.map((device, idx) => (
             <div
               key={device.id}
@@ -173,21 +173,21 @@ export default function ComparePage() {
             >
               <div className="flex flex-col items-center">
                 <XMarkIcon
-                  className="h-6 w-6 cursor-pointer text-gray-500 hover:text-red-500 mb-2"
+                  className="w-6 h-6 mb-2 text-gray-500 cursor-pointer hover:text-red-500"
                   onClick={() => removeDevice(device.id)}
                 />
                 <img
                   src={device.image}
                   alt={device.name}
-                  className="w-40 h-40 object-cover rounded-md mb-2"
+                  className="object-cover w-40 h-40 mb-2 rounded-md"
                 />
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 text-center">
+                <h2 className="text-xl font-semibold text-center text-gray-900 dark:text-gray-100">
                   {device.brand} {device.name}
                 </h2>
 
                 {/* 💰 Affiliate Price + Link */}
                 {device.specs.Price !== "-" && (
-                  <p className="text-green-500 font-bold text-lg mt-2">
+                  <p className="mt-2 text-lg font-bold text-green-500">
                     {device.specs.Price}
                   </p>
                 )}
@@ -196,7 +196,7 @@ export default function ComparePage() {
                     href={device.affiliate.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-block bg-green-500 text-black px-4 py-1 rounded-lg font-semibold hover:bg-green-400 transition"
+                    className="inline-block px-4 py-1 mt-2 font-semibold text-black transition bg-green-500 rounded-lg hover:bg-green-400"
                   >
                     {device.affiliate.store
                       ? `Buy on ${device.affiliate.store}`
@@ -226,7 +226,7 @@ export default function ComparePage() {
                         {spec}
                       </div>
                       <div
-                        className="text-base font-semibold text-gray-900 dark:text-gray-100 break-words"
+                        className="text-base font-semibold text-gray-900 break-words dark:text-gray-100"
                         title={value}
                       >
                         {value}

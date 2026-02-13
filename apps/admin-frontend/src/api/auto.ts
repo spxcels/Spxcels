@@ -1,148 +1,56 @@
 // src/api/auto.ts
+import api from "./axios";
 
 // ===============================
-// 🌐 API BASE URL
-// ===============================
-const BASE =
-  (import.meta.env?.VITE_API_BASE as string) || "http://localhost:3000";
-
-// ===============================
-// 📦 SAFE REQUEST WRAPPER (COOKIE AUTH)
-// ===============================
-async function request(path: string, options: RequestInit = {}) {
-  const url = `${BASE}${path}`;
-
-  // -------------------------------
-  // 🔧 SAFE HEADER NORMALIZATION
-  // -------------------------------
-  const headers: Record<string, string> = {};
-
-  if (options.headers instanceof Headers) {
-    // Headers object → convert to Record
-    options.headers.forEach((v, k) => {
-      headers[k] = v;
-    });
-  } else if (Array.isArray(options.headers)) {
-    // Array of tuples
-    options.headers.forEach(([k, v]) => {
-      headers[k] = v;
-    });
-  } else if (typeof options.headers === "object" && options.headers !== null) {
-    // Plain Record<string, string>
-    Object.entries(options.headers).forEach(([k, v]) => {
-      headers[k] = String(v);
-    });
-  }
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
-    credentials: "include", // <-- REQUIRED: same as api/auth.ts
-  });
-
-  // Parse JSON safely
-  let data = null;
-  try {
-    const raw = await response.text();
-    data = raw ? JSON.parse(raw) : null;
-  } catch {
-    data = null;
-  }
-
-  if (!response.ok) {
-    const error: any = new Error(
-      `API Error → ${response.status} ${response.statusText}`
-    );
-    error.status = response.status;
-    error.body = data;
-    throw error;
-  }
-
-  return data;
-}
-
-// ===============================
-// 📡 AUTO ADMIN CLIENT API
+// AUTO ADMIN API (AXIOS-BASED)
 // ===============================
 export const auto = {
-  // -------- Metadata --------
   tables() {
-    return request("/auto/metadata/tables");
+    return api.get("/auto/metadata/tables").then(res => res.data);
   },
 
   columns() {
-    return request("/auto/metadata/columns");
+    return api.get("/auto/metadata/columns").then(res => res.data);
   },
 
-  // -------- Dashboard Stats --------
   stats() {
-    return request("/auto/stats");
+    return api.get("/auto/stats").then(res => res.data);
   },
 
-  // -------- CRUD --------
   list(table: string) {
-    return request(`/auto/data/${encodeURIComponent(table)}`);
+    return api
+      .get(`/auto/data/${encodeURIComponent(table)}`)
+      .then(res => res.data);
   },
 
   get(table: string, id: string | number) {
-    return request(
-      `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(String(id))}`
-    );
+    return api
+      .get(
+        `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(String(id))}`
+      )
+      .then(res => res.data);
   },
 
   create(table: string, data: any) {
-    return request(`/auto/data/${encodeURIComponent(table)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    return api
+      .post(`/auto/data/${encodeURIComponent(table)}`, data)
+      .then(res => res.data);
   },
 
   update(table: string, id: string | number, data: any) {
-    return request(
-      `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(String(id))}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }
-    );
+    return api
+      .put(
+        `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(String(id))}`,
+        data
+      )
+      .then(res => res.data);
   },
 
   remove(table: string, id: string | number) {
-    return request(
-      `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(String(id))}`,
-      { method: "DELETE" }
-    );
-  },
-
-  // ===============================
-  // ⭐ ADMIN CONFIG SETTINGS
-  // ===============================
-  getDbUrl() {
-    return request("/admin/config/db-url");
-  },
-
-  updateDbUrl(value: string) {
-    return request("/admin/config/db-url", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ value }),
-    });
-  },
-
-  // ===============================
-  // 🔐 AUTH (COOKIE BASED)
-  // ===============================
-  me() {
-    return request("/auth/me");
-  },
-
-  changePassword(oldPassword: string, newPassword: string) {
-    return request("/auth/change-password", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ oldPassword, newPassword }),
-    });
+    return api
+      .delete(
+        `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(String(id))}`
+      )
+      .then(res => res.data);
   },
 };

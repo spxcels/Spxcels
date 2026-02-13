@@ -1,0 +1,12 @@
+import EmptyState from "@/components/EmptyState";
+
+export default function LaptopsIndex() {
+  return (
+    <EmptyState
+      title="Laptops"
+      description="No laptops added yet."
+      actionLabel="Add Laptop"
+      onAction={() => alert("Laptop workflow coming soon")}
+    />
+  );
+}

@@ -1,4 +1,4 @@
-import prisma from "@spxcel/db";
+import { prisma } from "@spxcel/db";
 import PhoneDetailsClient from "./PhoneDetailsClient";
 
 export async function generateStaticParams() {
@@ -18,7 +18,7 @@ export default async function PhonePage({
   if (!slug) {
     console.error("❌ Missing slug in params:", params);
     return (
-      <div className="p-10 text-red-500 text-center">
+      <div className="p-10 text-center text-red-500">
         ❌ Invalid URL — missing slug.
       </div>
     );
@@ -36,7 +36,7 @@ export default async function PhonePage({
 
   if (!model) {
     return (
-      <div className="p-10 text-red-500 text-center">
+      <div className="p-10 text-center text-red-500">
         ❌ Phone not found.
       </div>
     );
