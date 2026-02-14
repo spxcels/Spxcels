@@ -1,7 +1,7 @@
-import prisma from "@spxcel/db";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-export default async function seedAdmin() {
+export default async function seedAdmin(prisma: PrismaClient) {
   console.log("🌱 Seeding Admin user...");
 
   const hashed = await bcrypt.hash("admin123", 10);

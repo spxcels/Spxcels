@@ -1,16 +1,16 @@
-import prisma from "@spxcel/db";
+import { prisma } from "@spxcel/db";
 
 import seedAdmin from "./seeds/admin";
-import seedPhones from "./seeds/phones";
 import seedAdminConfig from "./seeds/adminConfig";
+import seedPhones from "./seeds/phones";
 
 async function main() {
   console.log("🌱 Running all Prisma seeds...");
 
-  // Run seeds in order
-  await seedAdmin();
-  await seedPhones();
-  await seedAdminConfig();
+  // Run seeds in dependency-safe order
+  await seedAdmin(prisma);
+  await seedAdminConfig(prisma);
+  await seedPhones(prisma);
 
   console.log("✨ All seeds executed successfully!");
 }

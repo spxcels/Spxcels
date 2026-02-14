@@ -1,22 +1,32 @@
-import prisma from "@spxcel/db";
-import { MediaType } from "@prisma/client";
+import { PrismaClient, MediaType } from "@prisma/client";
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from "url";
 
-export default async function seedPhones() {
-  console.log("📱 Auto-seeding phones, specs, media & affiliate links...");
+// ESM-safe __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  // Resolve backend root correctly (supports dev + build)
+export default async function seedPhones(prisma: PrismaClient) {
+  console.log("📱 Seeding phones, specs, media & affiliate links...");
+
+  // --------------------------------------------------
+  // Paths
+  // --------------------------------------------------
   const root = path.join(__dirname, "..", "..");
   const mediaRoot = path.join(root, "public", "media", "phones");
 
-  // Helper: read media files for a given model
+  // --------------------------------------------------
+  // Helper: read media files
+  // --------------------------------------------------
   function getMediaFiles(modelFolder: string) {
     const modelPath = path.join(mediaRoot, modelFolder);
-    const media: { url: string; type: MediaType; alt: string }[] = [];
+    const media: { url: string; type: MediaType; alt: string; order: number }[] = [];
 
     const imagePath = path.join(modelPath, "images");
     const videoPath = path.join(modelPath, "videos");
+
+    let order = 1;
 
     if (fs.existsSync(imagePath)) {
       for (const file of fs.readdirSync(imagePath)) {
@@ -24,6 +34,7 @@ export default async function seedPhones() {
           url: `/media/phones/${modelFolder}/images/${file}`,
           type: MediaType.IMAGE,
           alt: file.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
+          order: order++,
         });
       }
     }
@@ -34,6 +45,7 @@ export default async function seedPhones() {
           url: `/media/phones/${modelFolder}/videos/${file}`,
           type: MediaType.VIDEO,
           alt: file.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
+          order: order++,
         });
       }
     }
@@ -41,7 +53,9 @@ export default async function seedPhones() {
     return media;
   }
 
-  // --- Brands ---
+  // --------------------------------------------------
+  // Brands
+  // --------------------------------------------------
   const samsung = await prisma.phoneBrand.upsert({
     where: { slug: "samsung" },
     update: {},
@@ -54,7 +68,9 @@ export default async function seedPhones() {
     create: { name: "Apple", slug: "apple" },
   });
 
-  // --- Models ---
+  // --------------------------------------------------
+  // Models
+  // --------------------------------------------------
   const s25Ultra = await prisma.phoneModel.upsert({
     where: { slug: "galaxy-s25-ultra" },
     update: {},
@@ -81,7 +97,9 @@ export default async function seedPhones() {
     },
   });
 
-  // --- Specs ---
+  // --------------------------------------------------
+  // Specs
+  // --------------------------------------------------
   await prisma.phoneSpecs.upsert({
     where: { modelId: s25Ultra.id },
     update: {},
@@ -116,7 +134,15 @@ export default async function seedPhones() {
     },
   });
 
-  // --- Auto media seeding ---
+  // --------------------------------------------------
+  // Media (SAFE RESET PER MODEL)
+  // --------------------------------------------------
+  await prisma.phoneMedia.deleteMany({
+    where: {
+      modelId: { in: [s25Ultra.id, iphone15Pro.id] },
+    },
+  });
+
   const samsungMedia = getMediaFiles("samsung/s25-ultra");
   const iphoneMedia = getMediaFiles("apple/iphone-15-pro");
 
@@ -125,36 +151,39 @@ export default async function seedPhones() {
     ...iphoneMedia.map((m) => ({ ...m, modelId: iphone15Pro.id })),
   ];
 
-  if (mediaData.length > 0) {
-    await prisma.phoneMedia.createMany({
-      data: mediaData,
-      skipDuplicates: true,
-    });
-    console.log(`🖼️ Added ${mediaData.length} media files.`);
+  if (mediaData.length) {
+    await prisma.phoneMedia.createMany({ data: mediaData });
+    console.log(`🖼️ Added ${mediaData.length} media files`);
   } else {
-    console.log("⚠️ No media files found.");
+    console.log("⚠️ No media files found");
   }
 
-  // --- Affiliate Links ---
-  await prisma.affiliateLink.createMany({
-    data: [
-      {
-        modelId: s25Ultra.id,
-        storeName: "Amazon",
-        url: "https://amazon.in/samsung-galaxy-s25-ultra",
-        price: "₹1,29,999",
-        currency: "INR",
-      },
-      {
-        modelId: iphone15Pro.id,
-        storeName: "Amazon",
-        url: "https://amazon.in/apple-iphone-15-pro",
-        price: "₹1,39,999",
-        currency: "INR",
-      }
-    ],
-    skipDuplicates: true,
+  // --------------------------------------------------
+  // Affiliates (SAFE UPSERT)
+  // --------------------------------------------------
+  await prisma.affiliateLink.upsert({
+    where: { modelId_storeName: { modelId: s25Ultra.id, storeName: "Amazon" } },
+    update: {},
+    create: {
+      modelId: s25Ultra.id,
+      storeName: "Amazon",
+      url: "https://amazon.in/samsung-galaxy-s25-ultra",
+      price: "₹1,29,999",
+      currency: "INR",
+    },
   });
 
-  console.log("✅ All phone data seeded successfully!");
+  await prisma.affiliateLink.upsert({
+    where: { modelId_storeName: { modelId: iphone15Pro.id, storeName: "Amazon" } },
+    update: {},
+    create: {
+      modelId: iphone15Pro.id,
+      storeName: "Amazon",
+      url: "https://amazon.in/apple-iphone-15-pro",
+      price: "₹1,39,999",
+      currency: "INR",
+    },
+  });
+
+  console.log("✅ Phone seed complete!");
 }
