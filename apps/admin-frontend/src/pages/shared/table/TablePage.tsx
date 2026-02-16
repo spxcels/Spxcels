@@ -5,9 +5,14 @@ import TableForm from "./TableForm";
 type Props = {
   table: string;
   title: string;
+  fields: any[];
 };
 
-export default function TablePage({ table, title }: Props) {
+export default function TablePage({
+  table,
+  title,
+  fields,
+}: Props) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<any | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -60,6 +65,7 @@ export default function TablePage({ table, title }: Props) {
       {isFormOpen && (
         <TableForm
           table={table}
+          fields={fields}
           initialData={editingRow}
           onClose={closeForm}
           onSaved={handleSaved}

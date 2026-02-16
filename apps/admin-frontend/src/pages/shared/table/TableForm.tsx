@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
 import { auto } from "@/api/auto";
 
+type Field = {
+  name: string;
+  label?: string;
+  type?: string;
+  required?: boolean;
+};
+
 type Props = {
   table: string;
+  fields?: Field[];
   initialData: any | null;
   onClose: () => void;
   onSaved: () => void;
@@ -10,6 +18,7 @@ type Props = {
 
 export default function TableForm({
   table,
+  fields = [],
   initialData,
   onClose,
   onSaved,
@@ -45,6 +54,13 @@ export default function TableForm({
 
   useEffect(() => {
     const load = async () => {
+      if (fields.length > 0) {
+        setColumns(fields);
+        setForm(initialData ? { ...initialData } : {});
+        setLoading(false);
+        return;
+      }
+
       const cols = await auto.columns();
       setColumns(cols.filter((c: any) => c.table_name === table));
       setForm(initialData ? { ...initialData } : {});
@@ -52,7 +68,7 @@ export default function TableForm({
     };
 
     load();
-  }, [table, initialData]);
+  }, [table, initialData, fields]);
 
   const handleChange = (key: string, value: any) => {
     setForm((prev: any) => ({ ...prev, [key]: value }));
@@ -70,6 +86,56 @@ export default function TableForm({
     onSaved();
   };
 
+  const renderInput = (col: any) => {
+    const name = col.name || col.column_name;
+    const type = col.type || "text";
+    const value = form[name] ?? "";
+
+    switch (type) {
+      case "number":
+        return (
+          <input
+            type="number"
+            value={value}
+            onChange={(e) =>
+              handleChange(name, Number(e.target.value))
+            }
+            className="px-3 py-2 border rounded-lg dark:bg-zinc-800 dark:border-zinc-700"
+          />
+        );
+
+      case "textarea":
+        return (
+          <textarea
+            value={value}
+            onChange={(e) => handleChange(name, e.target.value)}
+            className="px-3 py-2 border rounded-lg dark:bg-zinc-800 dark:border-zinc-700"
+            rows={4}
+          />
+        );
+
+      case "boolean":
+        return (
+          <input
+            type="checkbox"
+            checked={Boolean(value)}
+            onChange={(e) => handleChange(name, e.target.checked)}
+            className="w-5 h-5"
+          />
+        );
+
+      default:
+        return (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => handleChange(name, e.target.value)}
+            className="px-3 py-2 border rounded-lg dark:bg-zinc-800 dark:border-zinc-700"
+          />
+        );
+    }
+  };
+
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
@@ -82,7 +148,7 @@ export default function TableForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-4xl p-6 bg-white dark:bg-zinc-900 rounded-xl">
+      <div className="w-full max-w-4xl p-6 bg-white rounded-xl dark:bg-zinc-900">
         <h1 className="mb-6 text-xl font-semibold">
           {isEdit ? "Edit" : "Create"} {table}
         </h1>
@@ -90,21 +156,18 @@ export default function TableForm({
         <form onSubmit={submit} className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             {columns.map((col) => {
-              if (col.column_name === "id") return null;
+              const name = col.name || col.column_name;
+              if (name === "id") return null;
 
-              const name = col.column_name;
-              const value = form[name] ?? "";
+              const label = col.label || name;
 
               return (
                 <div key={name} className="flex flex-col gap-1">
-                  <label className="text-sm font-medium">{name}</label>
-                  <input
-                    value={value}
-                    onChange={(e) =>
-                      handleChange(name, e.target.value)
-                    }
-                    className="px-3 py-2 border rounded-lg dark:bg-zinc-800 dark:border-zinc-700"
-                  />
+                  <label className="text-sm font-medium">
+                    {label}
+                  </label>
+
+                  {renderInput(col)}
                 </div>
               );
             })}
