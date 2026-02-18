@@ -17,13 +17,8 @@ export async function GET() {
     const scored = devices.map((d) => {
       let score = 0;
 
-      // specs boost
       if (d.specs) score += 10;
-
-      // media boost
       score += d.media.length * 2;
-
-      // affiliate boost
       score += d.affiliates.length * 3;
 
       return {
@@ -31,23 +26,22 @@ export async function GET() {
         name: d.name,
         slug: d.slug,
         image: d.image ?? "/images/placeholder.jpg",
-        brand: {
-          name: d.brand.name,
-        },
+
+        // 🔥 FIXED (string, not object)
+        brand: d.brand.name,
+
         score,
         createdAt: d.createdAt,
       };
     });
 
-    /* ================= SORT BY SCORE ================= */
+    /* ================= SORT ================= */
 
     scored.sort((a, b) => {
-      // first by score
       if (b.score !== a.score) {
         return b.score - a.score;
       }
 
-      // fallback → newest first
       return (
         new Date(b.createdAt).getTime() -
         new Date(a.createdAt).getTime()
@@ -55,13 +49,13 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      devices: scored,
+      results: scored,
     });
   } catch (error) {
     console.error("❌ /api/devices error:", error);
 
     return NextResponse.json(
-      { error: "Failed to load devices", devices: [] },
+      { error: "Failed to load devices", results: [] },
       { status: 500 }
     );
   }

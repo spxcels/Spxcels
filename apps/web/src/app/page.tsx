@@ -13,6 +13,7 @@ import PopularBrands from "@/components/home/PopularBrands";
 
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import CinematicBackground from "@/components/ui/CinematicBackground";
+import Section from "@/components/ui/Section";
 
 const notoJP = Noto_Sans_JP({
   subsets: ["latin"],
@@ -37,16 +38,9 @@ export default function Home() {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  /* ================= HERO GLOW ================= */
-
   const { scrollYProgress } = useScroll();
 
-  const glowY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [0, 250]
-  );
-
+  const glowY = useTransform(scrollYProgress, [0, 1], [0, 250]);
   const glowOpacity = useTransform(
     scrollYProgress,
     [0, 0.5],
@@ -65,9 +59,7 @@ export default function Home() {
     const timeout = setTimeout(async () => {
       try {
         const res = await fetch(
-          `/api/search?search=${encodeURIComponent(
-            searchQuery
-          )}`
+          `/api/search?search=${encodeURIComponent(searchQuery)}`
         );
 
         const data = await res.json();
@@ -95,16 +87,14 @@ export default function Home() {
     <div
       className={`${notoJP.variable} min-h-screen text-foreground relative overflow-hidden`}
     >
-      {/* CINEMATIC BACKGROUND */}
       <CinematicBackground />
 
-      {/* PAGE CONTENT */}
       <div className="relative z-10">
 
         {/* ================= HERO ================= */}
-        <section className="px-6 py-16 md:py-24 relative overflow-hidden">
+        <section className="px-6 min-h-[80vh] flex items-center py-16 md:py-24 relative overflow-hidden">
 
-          {/* ADAPTIVE GLOW */}
+          {/* GLOW */}
           <motion.div
             style={{ y: glowY, opacity: glowOpacity }}
             className="absolute inset-0 pointer-events-none"
@@ -128,7 +118,6 @@ export default function Home() {
               Search. Compare. Choose your next phone.
             </p>
 
-            {/* SEARCH */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1 }}
@@ -143,14 +132,11 @@ export default function Home() {
                   type="text"
                   placeholder="Search phones or brands..."
                   value={searchQuery}
-                  onChange={(e) =>
-                    setSearchQuery(e.target.value)
-                  }
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 rounded-full border border-border bg-card/90 backdrop-blur"
                 />
               </div>
 
-              {/* DROPDOWN */}
               {dropdownOpen && (
                 <div className="mt-2 bg-card border rounded-xl shadow-lg text-left max-h-96 overflow-y-auto">
                   {brandResults.map((brand) => (
@@ -160,9 +146,7 @@ export default function Home() {
                         brand.name
                       )}`}
                       className="block px-4 py-2 hover:bg-muted"
-                      onClick={() =>
-                        setDropdownOpen(false)
-                      }
+                      onClick={() => setDropdownOpen(false)}
                     >
                       {brand.name}
                     </Link>
@@ -173,24 +157,15 @@ export default function Home() {
                       key={model.id}
                       href={`/phones/${model.slug}`}
                       className="block px-4 py-2 hover:bg-muted"
-                      onClick={() =>
-                        setDropdownOpen(false)
-                      }
+                      onClick={() => setDropdownOpen(false)}
                     >
                       {model.name}
                     </Link>
                   ))}
-
-                  {searchResults.length === 0 && (
-                    <p className="px-4 py-2 text-sm text-muted-foreground">
-                      No results found
-                    </p>
-                  )}
                 </div>
               )}
             </motion.div>
 
-            {/* ACTION BUTTONS */}
             <div className="flex gap-3 mt-6 flex-wrap justify-center">
               <Link
                 href="/phones"
@@ -207,25 +182,32 @@ export default function Home() {
               </Link>
             </div>
           </div>
+
+          {/* HERO BLEND */}
+          <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-b from-transparent to-background pointer-events-none" />
         </section>
 
         {/* ================= SECTIONS ================= */}
 
-        <ScrollReveal>
+        <Section>
           <AutoHeroPhone />
-        </ScrollReveal>
+        </Section>
 
-        <ScrollReveal>
+        <Section layered>
           <TrendingPhones />
-        </ScrollReveal>
+        </Section>
 
-        <ScrollReveal>
-          <FeaturedComparison />
-        </ScrollReveal>
+        <Section>
+          <ScrollReveal>
+            <FeaturedComparison />
+          </ScrollReveal>
+        </Section>
 
-        <ScrollReveal>
-          <PopularBrands />
-        </ScrollReveal>
+        <Section layered>
+          <ScrollReveal>
+            <PopularBrands />
+          </ScrollReveal>
+        </Section>
 
       </div>
     </div>

@@ -30,15 +30,28 @@ export default function ComparePage() {
 
   const MAX_DEVICES = 2;
 
+  /* ================= FETCH DEVICES ================= */
+
   useEffect(() => {
     fetch("/api/devices")
       .then((res) => res.json())
-      .then((data) => setDevices(data.results))
-      .catch((err) => console.error(err));
+      .then((data) => {
+        // 🔥 SAFE NORMALIZATION (fix)
+        const safeDevices = Array.isArray(data?.results)
+          ? data.results
+          : [];
+        setDevices(safeDevices);
+      })
+      .catch((err) => {
+        console.error(err);
+        setDevices([]);
+      });
   }, []);
 
+  /* ================= FILTER ================= */
+
   useEffect(() => {
-    if (!search) {
+    if (!search || devices.length === 0) {
       setFilteredDevices([]);
       setDropdownOpen(false);
       return;
@@ -56,6 +69,8 @@ export default function ComparePage() {
     setDropdownOpen(true);
     setHighlightedIndex(0);
   }, [search, devices, selectedDevices]);
+
+  /* ================= OUTSIDE CLICK ================= */
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -100,10 +115,12 @@ export default function ComparePage() {
   };
 
   const allSpecs = Array.from(
-    new Set(selectedDevices.flatMap((device) => Object.keys(device.specs)))
+    new Set(selectedDevices.flatMap((device) => Object.keys(device.specs || {})))
   );
 
   const isMaxSelected = selectedDevices.length >= MAX_DEVICES;
+
+  /* ================= UI ================= */
 
   return (
     <div className="p-4 mx-auto max-w-7xl">
@@ -125,10 +142,11 @@ export default function ComparePage() {
               : "Search devices..."
           }
           disabled={isMaxSelected}
-          className={`w-full border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 ${isMaxSelected
-            ? "border-gray-300 dark:border-gray-700 cursor-not-allowed opacity-70"
-            : "border-gray-300 dark:border-gray-700"
-            }`}
+          className={`w-full border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 ${
+            isMaxSelected
+              ? "border-gray-300 dark:border-gray-700 cursor-not-allowed opacity-70"
+              : "border-gray-300 dark:border-gray-700"
+          }`}
         />
         <MagnifyingGlassIcon className="h-5 w-5 absolute right-3 top-2.5 text-gray-400 dark:text-gray-500" />
 
@@ -143,10 +161,11 @@ export default function ComparePage() {
                 <div
                   key={device.id}
                   onClick={() => addDevice(device)}
-                  className={`p-2 cursor-pointer transition ${index === highlightedIndex
-                    ? "bg-gray-200 dark:bg-gray-700"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                    }`}
+                  className={`p-2 cursor-pointer transition ${
+                    index === highlightedIndex
+                      ? "bg-gray-200 dark:bg-gray-700"
+                      : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
                 >
                   {device.brand} {device.name}
                 </div>
@@ -166,10 +185,9 @@ export default function ComparePage() {
           {selectedDevices.map((device, idx) => (
             <div
               key={device.id}
-              className={`p-4 ${idx === 0
-                ? "border-r border-gray-300 dark:border-gray-700"
-                : ""
-                } bg-white dark:bg-gray-800`}
+              className={`p-4 ${
+                idx === 0 ? "border-r border-gray-300 dark:border-gray-700" : ""
+              } bg-white dark:bg-gray-800`}
             >
               <div className="flex flex-col items-center">
                 <XMarkIcon
@@ -184,56 +202,6 @@ export default function ComparePage() {
                 <h2 className="text-xl font-semibold text-center text-gray-900 dark:text-gray-100">
                   {device.brand} {device.name}
                 </h2>
-
-                {/* 💰 Affiliate Price + Link */}
-                {device.specs.Price !== "-" && (
-                  <p className="mt-2 text-lg font-bold text-green-500">
-                    {device.specs.Price}
-                  </p>
-                )}
-                {device.affiliate && (
-                  <a
-                    href={device.affiliate.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-4 py-1 mt-2 font-semibold text-black transition bg-green-500 rounded-lg hover:bg-green-400"
-                  >
-                    {device.affiliate.store
-                      ? `Buy on ${device.affiliate.store}`
-                      : "Buy Now"}
-                  </a>
-                )}
-              </div>
-
-              <div className="mt-4 space-y-3">
-                {allSpecs.map((spec) => {
-                  const value = device.specs[spec] || "-";
-                  const otherDeviceValue =
-                    selectedDevices.find((d) => d.id !== device.id)?.specs[
-                    spec
-                    ] || "-";
-                  const highlight = value !== otherDeviceValue;
-
-                  return (
-                    <div
-                      key={spec}
-                      className={`p-3 rounded-lg ${highlight
-                        ? "bg-gray-100 dark:bg-gray-700"
-                        : "bg-gray-50 dark:bg-gray-800"
-                        }`}
-                    >
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {spec}
-                      </div>
-                      <div
-                        className="text-base font-semibold text-gray-900 break-words dark:text-gray-100"
-                        title={value}
-                      >
-                        {value}
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             </div>
           ))}

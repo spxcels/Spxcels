@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 
 /* ================= TYPES ================= */
 
@@ -11,12 +17,10 @@ type Phone = {
   name: string;
   slug: string;
   image: string | null;
-  brand: {
-    name: string;
-  };
+  brand: { name: string };
 };
 
-/* ================= BRAND GLOW MAP ================= */
+/* ================= BRAND GLOW ================= */
 
 const brandGlow: Record<string, string> = {
   Samsung: "from-blue-500/20 to-transparent",
@@ -31,54 +35,97 @@ export default function AutoHeroPhone() {
   const [phones, setPhones] = useState<Phone[]>([]);
   const [index, setIndex] = useState(0);
 
-  /* ================= LOAD PHONES ================= */
+  /* ================= MAGNETIC ================= */
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const rotateX = useSpring(mouseY, { stiffness: 120, damping: 18 });
+  const rotateY = useSpring(mouseX, { stiffness: 120, damping: 18 });
+
+  const glareX = useTransform(mouseX, [-20, 20], ["0%", "100%"]);
+  const glareY = useTransform(mouseY, [-20, 20], ["0%", "100%"]);
+
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+
+    const x = (e.clientX - (rect.left + rect.width / 2)) / 25;
+    const y = (e.clientY - (rect.top + rect.height / 2)) / 25;
+
+    mouseX.set(x);
+    mouseY.set(-y);
+  };
+
+  const resetMouse = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+
+  /* ================= LOAD ================= */
 
   useEffect(() => {
     const load = async () => {
-      try {
-        const res = await fetch("/api/devices");
-        const data = await res.json();
-
-        // top trending phones
-        setPhones((data.devices || []).slice(0, 3));
-      } catch (err) {
-        console.error("Hero phone load failed", err);
-      }
+      const res = await fetch("/api/devices");
+      const data = await res.json();
+      setPhones((data.devices || []).slice(0, 3));
     };
 
     load();
   }, []);
 
-  /* ================= AUTO ROTATE ================= */
+  /* ================= ROTATE ================= */
 
   useEffect(() => {
     if (phones.length <= 1) return;
 
-    const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % phones.length);
+    const i = setInterval(() => {
+      setIndex((p) => (p + 1) % phones.length);
     }, 5000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(i);
   }, [phones]);
 
   if (!phones.length) return null;
 
   const phone = phones[index];
-
   const glow =
-    brandGlow[phone.brand?.name] ||
-    "from-primary/20 to-transparent";
+    brandGlow[phone.brand?.name] || "from-primary/20 to-transparent";
 
   /* ================= UI ================= */
 
   return (
     <section className="px-6 pt-6">
       <div className="max-w-6xl mx-auto">
-        <div className="relative rounded-2xl border bg-card p-6 md:p-10 shadow-md overflow-hidden">
-          {/* ADAPTIVE GLOW */}
-          <div
-            className={`absolute inset-0 bg-gradient-to-br ${glow} pointer-events-none`}
+        <div className="relative overflow-hidden rounded-2xl border bg-card p-6 md:p-10 shadow-md">
+
+          {/* CINEMATIC BACKGROUND LAYER */}
+          <motion.div
+            animate={{ y: [0, -20, 0] }}
+            transition={{ duration: 10, repeat: Infinity }}
+            className={`absolute inset-0 bg-gradient-to-br ${glow}`}
           />
+
+          {/* FLOATING PARTICLES */}
+          <div className="absolute inset-0 pointer-events-none">
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-2 h-2 rounded-full bg-white/20"
+                initial={{
+                  x: Math.random() * 600,
+                  y: Math.random() * 300,
+                }}
+                animate={{
+                  y: [0, -30, 0],
+                  opacity: [0.2, 0.6, 0.2],
+                }}
+                transition={{
+                  duration: 6 + i,
+                  repeat: Infinity,
+                }}
+              />
+            ))}
+          </div>
 
           <AnimatePresence mode="wait">
             <motion.div
@@ -89,29 +136,40 @@ export default function AutoHeroPhone() {
               transition={{ duration: 0.45 }}
               className="relative flex flex-col md:flex-row items-center gap-8"
             >
-              {/* IMAGE */}
-              <div className="w-full md:w-1/2 flex justify-center">
+              {/* HERO IMAGE */}
+              <motion.div
+                className="relative w-full md:w-1/2 flex justify-center perspective-[1200px]"
+                onMouseMove={handleMove}
+                onMouseLeave={resetMouse}
+                style={{
+                  rotateX,
+                  rotateY,
+                  transformStyle: "preserve-3d",
+                }}
+              >
                 <motion.img
-                  src={
-                    phone.image || "/images/phones/a75.jpg"
-                  }
+                  src={phone.image || "/images/phones/a75.jpg"}
                   alt={phone.name}
-                  className="max-h-72 object-contain"
-                  animate={{
-                    y: [0, -8, 0],
-                  }}
+                  className="max-h-72 object-contain drop-shadow-2xl relative z-10"
+                  animate={{ y: [0, -10, 0] }}
                   transition={{
                     duration: 4,
                     repeat: Infinity,
                     ease: "easeInOut",
                   }}
                 />
-              </div>
+
+                {/* GLASS REFLECTION */}
+                <motion.div
+                  style={{ left: glareX, top: glareY }}
+                  className="absolute w-40 h-40 rounded-full bg-white/20 blur-3xl"
+                />
+              </motion.div>
 
               {/* CONTENT */}
               <div className="w-full md:w-1/2">
                 <p className="text-sm text-muted-foreground">
-                  🔥 Trending Now
+                  🔥 Flagship Spotlight
                 </p>
 
                 <h2 className="text-3xl md:text-4xl font-bold mt-2">

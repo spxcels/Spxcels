@@ -1,26 +1,22 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Menu,
   Sun,
   Moon,
-  Search,
   Smartphone,
   Gift,
   ArrowLeftRight,
   X,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-
-interface SearchResult {
-  id: number;
-  name: string;
-  slug?: string;
-  brand?: { id: number; name: string; slug: string };
-  type: "model" | "brand";
-}
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useMotionValueEvent,
+} from "framer-motion";
 
 /* ================= THEME ICON ================= */
 
@@ -60,13 +56,15 @@ const ThemeIcon = ({ isDark }: { isDark: boolean }) => {
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const resultsRef = useRef<HTMLUListElement>(null);
+  /* ================= SMOOTH SCROLL DETECT ================= */
+
+  const { scrollY } = useScroll();
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setScrolled(latest > 60);
+  });
 
   /* ================= THEME ================= */
 
@@ -87,27 +85,6 @@ export default function Header() {
     });
   };
 
-  /* ================= SEARCH ================= */
-
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setDropdownOpen(false);
-      return;
-    }
-
-    const timeout = setTimeout(async () => {
-      const res = await fetch(
-        `/api/search?search=${encodeURIComponent(searchQuery)}`
-      );
-      const data = await res.json();
-      setSearchResults(data.results || []);
-      setDropdownOpen(true);
-    }, 300);
-
-    return () => clearTimeout(timeout);
-  }, [searchQuery]);
-
   /* ================= NAV ITEMS ================= */
 
   const navItems = [
@@ -119,10 +96,22 @@ export default function Header() {
   /* ================= UI ================= */
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/70 backdrop-blur-xl shadow-sm">
+    <header
+      className={`fixed top-0 left-0 z-50 w-full transition-all duration-300 ${
+        scrolled
+          ? "bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm"
+          : "bg-transparent"
+      }`}
+    >
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+
         {/* LOGO */}
-        <Link href="/" className="font-bold text-lg tracking-tight">
+        <Link
+          href="/"
+          className={`font-bold text-lg tracking-tight transition ${
+            scrolled ? "text-foreground" : "text-foreground/90"
+          }`}
+        >
           Spxcel
         </Link>
 
@@ -132,7 +121,11 @@ export default function Header() {
             <Link
               key={item.name}
               href={item.href}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition"
+              className={`text-sm font-medium transition ${
+                scrolled
+                  ? "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground/90 hover:text-foreground"
+              }`}
             >
               {item.name}
             </Link>
@@ -174,7 +167,7 @@ export default function Header() {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="md:hidden border-t border-border/40 bg-background/90 backdrop-blur-lg px-6 py-4 space-y-3"
+            className="md:hidden bg-background/90 backdrop-blur-lg px-6 py-4 space-y-3"
           >
             {navItems.map((item) => (
               <Link

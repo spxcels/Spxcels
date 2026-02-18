@@ -10,10 +10,8 @@ type Phone = {
   name: string;
   slug: string;
   image: string | null;
-  score: number; // ⭐ trending score
-  brand: {
-    name: string;
-  };
+  score: number;
+  brand: string; // 🔥 API now returns string
 };
 
 export default function TrendingPhones() {
@@ -23,24 +21,12 @@ export default function TrendingPhones() {
   /* ================= BADGE LOGIC ================= */
 
   const getBadge = (score: number) => {
-    if (score >= 20) {
-      return {
-        label: "🔥 HOT",
-        color: "bg-red-500 text-white",
-      };
-    }
+    if (score >= 20)
+      return { label: "🔥 HOT", color: "bg-red-500 text-white" };
+    if (score >= 12)
+      return { label: "⭐ TOP", color: "bg-yellow-500 text-black" };
 
-    if (score >= 12) {
-      return {
-        label: "⭐ TOP",
-        color: "bg-yellow-500 text-black",
-      };
-    }
-
-    return {
-      label: "⚡ NEW",
-      color: "bg-blue-500 text-white",
-    };
+    return { label: "⚡ NEW", color: "bg-blue-500 text-white" };
   };
 
   /* ================= LOAD DATA ================= */
@@ -51,8 +37,8 @@ export default function TrendingPhones() {
         const res = await fetch("/api/devices");
         const data = await res.json();
 
-        // show top trending phones
-        setPhones((data.devices || []).slice(0, 6));
+        // 🔥 FIXED HERE
+        setPhones((data.results || []).slice(0, 6));
       } catch (err) {
         console.error("Failed to load trending phones", err);
       } finally {
@@ -82,11 +68,8 @@ export default function TrendingPhones() {
   return (
     <section className="px-6 py-16 md:py-20 bg-muted/20">
       <div className="max-w-6xl mx-auto">
-        {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">
-            🔥 Trending Phones
-          </h2>
+          <h2 className="text-2xl font-bold">🔥 Trending Phones</h2>
 
           <Link
             href="/phones"
@@ -96,7 +79,6 @@ export default function TrendingPhones() {
           </Link>
         </div>
 
-        {/* GRID */}
         <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
           {phones.map((phone) => {
             const badge = getBadge(phone.score);
@@ -107,9 +89,7 @@ export default function TrendingPhones() {
                 href={`/phones/${phone.slug}`}
                 className="group overflow-hidden border rounded-xl bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
-                {/* IMAGE */}
                 <div className="relative aspect-[4/3] flex items-center justify-center overflow-hidden bg-gradient-to-b from-muted/60 to-muted">
-                  {/* BADGE */}
                   <span
                     className={`absolute top-3 left-3 text-xs px-2 py-1 rounded-full font-medium ${badge.color}`}
                   >
@@ -123,10 +103,9 @@ export default function TrendingPhones() {
                   />
                 </div>
 
-                {/* CONTENT */}
                 <div className="p-4">
                   <p className="text-sm text-muted-foreground">
-                    {phone.brand?.name ?? "Unknown"}
+                    {phone.brand ?? "Unknown"}
                   </p>
 
                   <h3 className="mt-1 text-lg font-semibold">
