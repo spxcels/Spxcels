@@ -1,32 +1,86 @@
-import Link from "next/link";
+"use client";
 
-const phones = [
-  {
-    id: 1,
-    name: "Galaxy S25 Ultra",
-    brand: "Samsung",
-    slug: "galaxy-s25-ultra",
-    image: "/images/phones/s25-ultra.jpg",
-  },
-  {
-    id: 2,
-    name: "iPhone 15 Pro",
-    brand: "Apple",
-    slug: "iphone-15-pro",
-    image: "/images/phones/iphone15pro.jpg",
-  },
-  {
-    id: 3,
-    name: "Galaxy A75",
-    brand: "Samsung",
-    slug: "galaxy-a75",
-    image: "/images/phones/a75.jpg",
-  },
-];
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+/* ================= TYPES ================= */
+
+type Phone = {
+  id: number;
+  name: string;
+  slug: string;
+  image: string | null;
+  score: number; // ⭐ trending score
+  brand: {
+    name: string;
+  };
+};
 
 export default function TrendingPhones() {
+  const [phones, setPhones] = useState<Phone[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  /* ================= BADGE LOGIC ================= */
+
+  const getBadge = (score: number) => {
+    if (score >= 20) {
+      return {
+        label: "🔥 HOT",
+        color: "bg-red-500 text-white",
+      };
+    }
+
+    if (score >= 12) {
+      return {
+        label: "⭐ TOP",
+        color: "bg-yellow-500 text-black",
+      };
+    }
+
+    return {
+      label: "⚡ NEW",
+      color: "bg-blue-500 text-white",
+    };
+  };
+
+  /* ================= LOAD DATA ================= */
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/devices");
+        const data = await res.json();
+
+        // show top trending phones
+        setPhones((data.devices || []).slice(0, 6));
+      } catch (err) {
+        console.error("Failed to load trending phones", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
+
+  /* ================= LOADING ================= */
+
+  if (loading) {
+    return (
+      <section className="px-6 py-16 md:py-20 bg-muted/20">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-sm text-muted-foreground">
+            Loading trending phones...
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  /* ================= UI ================= */
+
   return (
-    <section className="px-6 py-16 md:py-20">
+    <section className="px-6 py-16 md:py-20 bg-muted/20">
       <div className="max-w-6xl mx-auto">
         {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
@@ -44,33 +98,44 @@ export default function TrendingPhones() {
 
         {/* GRID */}
         <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-          {phones.map((phone) => (
-            <Link
-              key={phone.id}
-              href={`/phones/${phone.slug}`}
-              className="group overflow-hidden border rounded-xl bg-card hover:shadow-lg transition"
-            >
-              {/* IMAGE */}
-              <div className="aspect-[4/3] overflow-hidden bg-muted">
-                <img
-                  src={phone.image}
-                  alt={phone.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                />
-              </div>
+          {phones.map((phone) => {
+            const badge = getBadge(phone.score);
 
-              {/* CONTENT */}
-              <div className="p-4">
-                <p className="text-sm text-muted-foreground">
-                  {phone.brand}
-                </p>
+            return (
+              <Link
+                key={phone.id}
+                href={`/phones/${phone.slug}`}
+                className="group overflow-hidden border rounded-xl bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+              >
+                {/* IMAGE */}
+                <div className="relative aspect-[4/3] flex items-center justify-center overflow-hidden bg-gradient-to-b from-muted/60 to-muted">
+                  {/* BADGE */}
+                  <span
+                    className={`absolute top-3 left-3 text-xs px-2 py-1 rounded-full font-medium ${badge.color}`}
+                  >
+                    {badge.label}
+                  </span>
 
-                <h3 className="mt-1 text-lg font-semibold">
-                  {phone.name}
-                </h3>
-              </div>
-            </Link>
-          ))}
+                  <img
+                    src={phone.image || "/images/phones/a75.jpg"}
+                    alt={phone.name}
+                    className="w-full h-full object-contain p-6 group-hover:scale-110 transition duration-300"
+                  />
+                </div>
+
+                {/* CONTENT */}
+                <div className="p-4">
+                  <p className="text-sm text-muted-foreground">
+                    {phone.brand?.name ?? "Unknown"}
+                  </p>
+
+                  <h3 className="mt-1 text-lg font-semibold">
+                    {phone.name}
+                  </h3>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
