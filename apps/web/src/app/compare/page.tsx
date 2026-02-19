@@ -1,20 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
-
-interface Affiliate {
-  store: string;
-  url: string;
-}
 
 interface Device {
   id: number;
   name: string;
   image: string;
   brand: string;
-  specs: { [key: string]: string };
-  affiliate?: Affiliate | null;
+  specs?: Record<string, string>;
 }
 
 export default function ComparePage() {
@@ -30,50 +24,45 @@ export default function ComparePage() {
 
   const MAX_DEVICES = 2;
 
-  /* ================= FETCH DEVICES ================= */
+  /* ================= FETCH ================= */
 
   useEffect(() => {
     fetch("/api/devices")
-      .then((res) => res.json())
+      .then((r) => r.json())
       .then((data) => {
-        // 🔥 SAFE NORMALIZATION (fix)
-        const safeDevices = Array.isArray(data?.results)
-          ? data.results
-          : [];
-        setDevices(safeDevices);
-      })
-      .catch((err) => {
-        console.error(err);
-        setDevices([]);
+        const safe = Array.isArray(data?.results) ? data.results : [];
+        setDevices(safe);
       });
   }, []);
 
-  /* ================= FILTER ================= */
+  /* ================= SEARCH ================= */
 
   useEffect(() => {
-    if (!search || devices.length === 0) {
+    const q = search.trim().toLowerCase();
+
+    if (!q || selectedDevices.length >= MAX_DEVICES) {
       setFilteredDevices([]);
       setDropdownOpen(false);
       return;
     }
 
-    const results = devices.filter(
-      (device) =>
-        (device.brand + " " + device.name)
-          .toLowerCase()
-          .includes(search.toLowerCase()) &&
-        !selectedDevices.find((d) => d.id === device.id)
-    );
+    const results = devices
+      .filter(
+        (d) =>
+          `${d.brand} ${d.name}`.toLowerCase().includes(q) &&
+          !selectedDevices.some((s) => s.id === d.id)
+      )
+      .slice(0, 8);
 
     setFilteredDevices(results);
-    setDropdownOpen(true);
+    setDropdownOpen(results.length > 0);
     setHighlightedIndex(0);
   }, [search, devices, selectedDevices]);
 
   /* ================= OUTSIDE CLICK ================= */
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handler = (e: MouseEvent) => {
       if (
         !inputRef.current?.contains(e.target as Node) &&
         !resultsRef.current?.contains(e.target as Node)
@@ -81,130 +70,160 @@ export default function ComparePage() {
         setDropdownOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  /* ================= KEYBOARD ================= */
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!dropdownOpen || filteredDevices.length === 0) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setHighlightedIndex((prev) =>
-        prev < filteredDevices.length - 1 ? prev + 1 : prev
+      setHighlightedIndex((p) =>
+        Math.min(p + 1, filteredDevices.length - 1)
       );
-    } else if (e.key === "ArrowUp") {
+    }
+
+    if (e.key === "ArrowUp") {
       e.preventDefault();
-      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : prev));
-    } else if (e.key === "Enter") {
+      setHighlightedIndex((p) => Math.max(p - 1, 0));
+    }
+
+    if (e.key === "Enter") {
       e.preventDefault();
-      const selected = filteredDevices[highlightedIndex];
-      if (selected) addDevice(selected);
+      addDevice(filteredDevices[highlightedIndex]);
     }
   };
 
+  /* ================= ACTIONS ================= */
+
   const addDevice = (device: Device) => {
+    if (!device) return;
     if (selectedDevices.length >= MAX_DEVICES) return;
-    setSelectedDevices([...selectedDevices, device]);
+
+    setSelectedDevices((p) => [...p, device]);
+
     setSearch("");
+    setFilteredDevices([]);
     setDropdownOpen(false);
+
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   const removeDevice = (id: number) => {
-    setSelectedDevices(selectedDevices.filter((d) => d.id !== id));
+    setSelectedDevices((p) => p.filter((d) => d.id !== id));
   };
 
-  const allSpecs = Array.from(
-    new Set(selectedDevices.flatMap((device) => Object.keys(device.specs || {})))
-  );
+  /* ================= SPECS ================= */
 
-  const isMaxSelected = selectedDevices.length >= MAX_DEVICES;
+  const ignored = ["id", "modelId", "createdAt", "updatedAt"];
+
+  const allSpecs = useMemo(() => {
+    const set = new Set<string>();
+
+    selectedDevices.forEach((d) => {
+      Object.keys(d.specs || {}).forEach((k) => {
+        if (!ignored.includes(k)) set.add(k);
+      });
+    });
+
+    return Array.from(set);
+  }, [selectedDevices]);
 
   /* ================= UI ================= */
 
   return (
-    <div className="p-4 mx-auto max-w-7xl">
-      <h1 className="mb-6 text-3xl font-bold text-center text-gray-900 dark:text-gray-100">
-        Compare Devices
-      </h1>
+    <div className="max-w-7xl mx-auto px-6 pt-28 pb-20">
 
-      {/* Search Bar */}
-      <div className="relative mb-6">
+      {/* SEARCH */}
+      <div className="relative max-w-2xl mx-auto mb-12">
         <input
           ref={inputRef}
-          type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={
-            isMaxSelected
-              ? `Max ${MAX_DEVICES} devices selected`
+            selectedDevices.length >= MAX_DEVICES
+              ? "Max devices selected"
               : "Search devices..."
           }
-          disabled={isMaxSelected}
-          className={`w-full border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 ${
-            isMaxSelected
-              ? "border-gray-300 dark:border-gray-700 cursor-not-allowed opacity-70"
-              : "border-gray-300 dark:border-gray-700"
-          }`}
+          disabled={selectedDevices.length >= MAX_DEVICES}
+          className="w-full rounded-xl border border-border px-5 py-3 pr-10"
         />
-        <MagnifyingGlassIcon className="h-5 w-5 absolute right-3 top-2.5 text-gray-400 dark:text-gray-500" />
 
-        {/* Dropdown */}
-        {dropdownOpen && !isMaxSelected && (
+        <MagnifyingGlassIcon className="w-5 h-5 absolute right-4 top-3.5 text-muted-foreground" />
+
+        {dropdownOpen && (
           <div
             ref={resultsRef}
-            className="absolute z-10 w-full mt-1 overflow-auto bg-white border border-gray-300 rounded-md shadow-md dark:bg-gray-800 dark:border-gray-700 max-h-60"
+            className="absolute w-full mt-2 bg-background border border-border rounded-xl shadow-lg max-h-60 overflow-auto z-10"
           >
-            {filteredDevices.length > 0 ? (
-              filteredDevices.map((device, index) => (
-                <div
-                  key={device.id}
-                  onClick={() => addDevice(device)}
-                  className={`p-2 cursor-pointer transition ${
-                    index === highlightedIndex
-                      ? "bg-gray-200 dark:bg-gray-700"
-                      : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  {device.brand} {device.name}
-                </div>
-              ))
-            ) : (
-              <div className="p-2 text-gray-500 dark:text-gray-400">
-                No results found
+            {filteredDevices.map((d, i) => (
+              <div
+                key={d.id}
+                onClick={() => addDevice(d)}
+                className={`px-4 py-2 cursor-pointer ${
+                  i === highlightedIndex ? "bg-muted" : "hover:bg-muted/60"
+                }`}
+              >
+                {d.brand} {d.name}
               </div>
-            )}
+            ))}
           </div>
         )}
       </div>
 
-      {/* Compare Layout */}
+      {/* COMPARE TABLE (Google Style) */}
       {selectedDevices.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 overflow-hidden border border-gray-300 rounded-lg shadow-md dark:border-gray-700">
-          {selectedDevices.map((device, idx) => (
-            <div
-              key={device.id}
-              className={`p-4 ${
-                idx === 0 ? "border-r border-gray-300 dark:border-gray-700" : ""
-              } bg-white dark:bg-gray-800`}
-            >
-              <div className="flex flex-col items-center">
-                <XMarkIcon
-                  className="w-6 h-6 mb-2 text-gray-500 cursor-pointer hover:text-red-500"
-                  onClick={() => removeDevice(device.id)}
-                />
+        <div className="border rounded-2xl overflow-hidden">
+
+          {/* HEADER ROW */}
+          <div className="grid md:grid-cols-3 border-b">
+            <div className="bg-muted/30" />
+
+            {selectedDevices.map((d) => (
+              <div key={d.id} className="relative p-6 text-center">
+                <button
+                  onClick={() => removeDevice(d.id)}
+                  className="absolute right-4 top-4"
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+
                 <img
-                  src={device.image}
-                  alt={device.name}
-                  className="object-cover w-40 h-40 mb-2 rounded-md"
+                  src={d.image}
+                  className="w-40 h-40 object-contain mx-auto mb-3"
                 />
-                <h2 className="text-xl font-semibold text-center text-gray-900 dark:text-gray-100">
-                  {device.brand} {device.name}
+
+                <h2 className="font-bold text-lg">
+                  {d.brand} {d.name}
                 </h2>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          {/* SPECS */}
+          {selectedDevices.length === 2 &&
+            allSpecs.map((spec, idx) => {
+              const a = selectedDevices[0]?.specs?.[spec] ?? "-";
+              const b = selectedDevices[1]?.specs?.[spec] ?? "-";
+
+              return (
+                <div
+                  key={spec}
+                  className={`grid md:grid-cols-3 border-b ${
+                    idx % 2 === 0 ? "bg-muted/20" : ""
+                  }`}
+                >
+                  <div className="p-4 font-medium capitalize">{spec}</div>
+                  <div className="p-4 text-center">{a}</div>
+                  <div className="p-4 text-center">{b}</div>
+                </div>
+              );
+            })}
         </div>
       )}
     </div>

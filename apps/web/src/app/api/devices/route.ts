@@ -21,15 +21,24 @@ export async function GET() {
       score += d.media.length * 2;
       score += d.affiliates.length * 3;
 
+      // 🔥 Normalize specs into flat key/value object
+      const normalizedSpecs: Record<string, string> = {};
+
+      if (d.specs) {
+        Object.entries(d.specs).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            normalizedSpecs[key] = String(value);
+          }
+        });
+      }
+
       return {
         id: d.id,
         name: d.name,
         slug: d.slug,
         image: d.image ?? "/images/placeholder.jpg",
-
-        // 🔥 FIXED (string, not object)
-        brand: d.brand.name,
-
+        brand: d.brand?.name ?? "Unknown",
+        specs: normalizedSpecs, // ✅ RETURN SPECS
         score,
         createdAt: d.createdAt,
       };
