@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Noto_Sans_JP } from "next/font/google";
 
 import AutoHeroPhone from "@/components/home/AutoHeroPhone";
 import TrendingPhones from "@/components/home/TrendingPhones";
@@ -14,12 +13,6 @@ import PopularBrands from "@/components/home/PopularBrands";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import CinematicBackground from "@/components/ui/CinematicBackground";
 import Section from "@/components/ui/Section";
-
-const notoJP = Noto_Sans_JP({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-noto",
-});
 
 interface SearchResult {
   id: number;
@@ -46,8 +39,6 @@ export default function Home() {
     [0, 0.5],
     [1, 0.3]
   );
-
-  /* ================= SEARCH ================= */
 
   useEffect(() => {
     if (!searchQuery) {
@@ -81,20 +72,14 @@ export default function Home() {
     (r) => r.type === "model"
   );
 
-  /* ================= UI ================= */
-
   return (
-    <div
-      className={`${notoJP.variable} min-h-screen text-foreground relative overflow-hidden`}
-    >
+    <div className="min-h-screen text-foreground relative overflow-hidden">
       <CinematicBackground />
 
       <div className="relative z-10">
 
-        {/* ================= HERO ================= */}
         <section className="px-6 min-h-[80vh] flex items-center py-16 md:py-24 relative overflow-hidden">
 
-          {/* GLOW */}
           <motion.div
             style={{ y: glowY, opacity: glowOpacity }}
             className="absolute inset-0 pointer-events-none"
@@ -183,11 +168,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* HERO BLEND */}
           <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-b from-transparent to-background pointer-events-none" />
         </section>
-
-        {/* ================= SECTIONS ================= */}
 
         <Section>
           <AutoHeroPhone />
