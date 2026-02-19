@@ -105,7 +105,6 @@ export default function ComparePage() {
     if (selectedDevices.length >= MAX_DEVICES) return;
 
     setSelectedDevices((p) => [...p, device]);
-
     setSearch("");
     setFilteredDevices([]);
     setDropdownOpen(false);
@@ -136,10 +135,10 @@ export default function ComparePage() {
   /* ================= UI ================= */
 
   return (
-    <div className="max-w-7xl mx-auto px-6 pt-28 pb-20">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-20">
 
       {/* SEARCH */}
-      <div className="relative max-w-2xl mx-auto mb-12">
+      <div className="relative max-w-2xl mx-auto mb-10">
         <input
           ref={inputRef}
           value={search}
@@ -176,29 +175,28 @@ export default function ComparePage() {
         )}
       </div>
 
-      {/* COMPARE TABLE (Google Style) */}
+      {/* HEADER */}
       {selectedDevices.length > 0 && (
         <div className="border rounded-2xl overflow-hidden">
 
-          {/* HEADER ROW */}
-          <div className="grid md:grid-cols-3 border-b">
-            <div className="bg-muted/30" />
+          <div className="grid grid-cols-2 md:grid-cols-3 border-b">
+            <div className="hidden md:block bg-muted/30" />
 
             {selectedDevices.map((d) => (
-              <div key={d.id} className="relative p-6 text-center">
+              <div key={d.id} className="relative p-4 md:p-6 text-center">
                 <button
                   onClick={() => removeDevice(d.id)}
-                  className="absolute right-4 top-4"
+                  className="absolute right-3 top-3"
                 >
-                  <XMarkIcon className="w-5 h-5" />
+                  <XMarkIcon className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
 
                 <img
                   src={d.image}
-                  className="w-40 h-40 object-contain mx-auto mb-3"
+                  className="w-24 h-24 md:w-40 md:h-40 object-contain mx-auto mb-2 md:mb-3"
                 />
 
-                <h2 className="font-bold text-lg">
+                <h2 className="font-bold text-sm md:text-lg leading-snug">
                   {d.brand} {d.name}
                 </h2>
               </div>
@@ -214,13 +212,30 @@ export default function ComparePage() {
               return (
                 <div
                   key={spec}
-                  className={`grid md:grid-cols-3 border-b ${
+                  className={`grid grid-cols-2 md:grid-cols-3 border-b ${
                     idx % 2 === 0 ? "bg-muted/20" : ""
                   }`}
                 >
-                  <div className="p-4 font-medium capitalize">{spec}</div>
-                  <div className="p-4 text-center">{a}</div>
-                  <div className="p-4 text-center">{b}</div>
+                  {/* Desktop label */}
+                  <div className="hidden md:block p-4 font-medium capitalize">
+                    {spec}
+                  </div>
+
+                  {/* MOBILE CENTER LINE SECTION TITLE */}
+                  <div className="md:hidden col-span-2 flex items-center px-3 py-2">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="px-2 text-[10px] tracking-widest font-semibold text-muted-foreground uppercase whitespace-nowrap">
+                      {spec}
+                    </span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+
+                  <div className="p-3 md:p-4 text-center text-sm md:text-base">
+                    {a}
+                  </div>
+                  <div className="p-3 md:p-4 text-center text-sm md:text-base">
+                    {b}
+                  </div>
                 </div>
               );
             })}
