@@ -2,51 +2,94 @@ import { NextResponse } from "next/server";
 import Fuse from "fuse.js";
 import { prisma } from "@spxcel/db";
 
+/* ===============================
+   GLOBAL CACHE (FAST SEARCH)
+=============================== */
+
+let fuse: Fuse<any> | null = null;
+let lastLoaded = 0;
+
+const CACHE_TIME = 1000 * 60 * 5; // 5 minutes
+
+async function getFuseIndex() {
+  const now = Date.now();
+
+  // reuse cache if valid
+  if (fuse && now - lastLoaded < CACHE_TIME) {
+    return fuse;
+  }
+
+  // fetch data once
+  const [models, brands] = await Promise.all([
+    prisma.phoneModel.findMany({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        brand: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+    }),
+
+    prisma.phoneBrand.findMany({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+      },
+    }),
+  ]);
+
+  const combined = [
+    ...models.map((m) => ({ ...m, type: "model" })),
+    ...brands.map((b) => ({ ...b, type: "brand" })),
+  ];
+
+  // build fuse index once
+  fuse = new Fuse(combined, {
+    keys: [
+      { name: "name", weight: 0.7 },
+      { name: "brand.name", weight: 0.3 },
+    ],
+    threshold: 0.35,
+    ignoreLocation: true,
+  });
+
+  lastLoaded = now;
+
+  return fuse;
+}
+
+/* ===============================
+   SEARCH API
+=============================== */
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const search = url.searchParams.get("search");
 
-    if (!search || search.trim() === "") {
+    if (!search?.trim()) {
       return NextResponse.json({ results: [] });
     }
 
     const query = search.trim().toLowerCase();
 
-    // Fetch models and brands concurrently
-    const [models, brands] = await Promise.all([
-      prisma.phoneModel.findMany({
-        include: { brand: true },
-        orderBy: { name: "asc" },
-      }),
-      prisma.phoneBrand.findMany({
-        orderBy: { name: "asc" },
-      }),
-    ]);
+    const fuseIndex = await getFuseIndex();
 
-    // Combine models + brands into one dataset
-    const combined = [
-      ...models.map((m) => ({ ...m, type: "model" })),
-      ...brands.map((b) => ({ ...b, type: "brand" })),
-    ];
-
-    // Fuse.js config
-    const fuse = new Fuse(combined, {
-      keys: [
-        { name: "name", weight: 0.6 },
-        { name: "brand.name", weight: 0.4 },
-      ],
-      threshold: 0.35,
-      distance: 70,
-      ignoreLocation: true,
-    });
-
-    const fuzzyResults = fuse.search(query);
-    const results = fuzzyResults.map((r) => r.item).slice(0, 20);
+    const results = fuseIndex
+      .search(query, { limit: 20 })
+      .map((r) => r.item);
 
     return NextResponse.json({ results });
   } catch (error) {
     console.error("❌ Search API error:", error);
+
     return NextResponse.json(
       { error: "Search failed", results: [] },
       { status: 500 }

@@ -24,26 +24,26 @@ interface SearchResult {
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] =
-    useState<SearchResult[]>([]);
-  const [dropdownOpen, setDropdownOpen] =
-    useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Elite navigation
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll();
-
   const glowY = useTransform(scrollYProgress, [0, 1], [0, 250]);
-  const glowOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.5],
-    [1, 0.3]
-  );
+  const glowOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.3]);
+
+  /* ================= SEARCH ================= */
 
   useEffect(() => {
     if (!searchQuery) {
       setSearchResults([]);
       setDropdownOpen(false);
+      setHighlightedIndex(-1);
       return;
     }
 
@@ -56,6 +56,7 @@ export default function Home() {
         const data = await res.json();
         setSearchResults(data.results || []);
         setDropdownOpen(true);
+        setHighlightedIndex(-1);
       } catch (err) {
         console.error("Search failed", err);
       }
@@ -63,6 +64,17 @@ export default function Home() {
 
     return () => clearTimeout(timeout);
   }, [searchQuery]);
+
+  // auto scroll selected result
+  useEffect(() => {
+    if (!listRef.current || highlightedIndex < 0) return;
+
+    const el = listRef.current.querySelector(
+      `[data-index="${highlightedIndex}"]`
+    ) as HTMLElement | null;
+
+    el?.scrollIntoView({ block: "nearest" });
+  }, [highlightedIndex]);
 
   const brandResults = searchResults.filter(
     (r) => r.type === "brand"
@@ -72,12 +84,15 @@ export default function Home() {
     (r) => r.type === "model"
   );
 
+  const combinedResults = [...brandResults, ...modelResults];
+
+  /* ================= UI ================= */
+
   return (
     <div className="min-h-screen text-foreground relative overflow-hidden">
       <CinematicBackground />
 
       <div className="relative z-10">
-
         <section className="px-6 min-h-[80vh] flex items-center py-16 md:py-24 relative overflow-hidden">
 
           <motion.div
@@ -119,29 +134,77 @@ export default function Home() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 rounded-full border border-border bg-card/90 backdrop-blur"
+                  onKeyDown={(e) => {
+                    if (!dropdownOpen || combinedResults.length === 0) return;
+
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setHighlightedIndex((prev) =>
+                        prev < combinedResults.length - 1 ? prev + 1 : 0
+                      );
+                    }
+
+                    if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setHighlightedIndex((prev) =>
+                        prev > 0 ? prev - 1 : combinedResults.length - 1
+                      );
+                    }
+
+                    if (e.key === "Escape") {
+                      setDropdownOpen(false);
+                      setHighlightedIndex(-1);
+                    }
+
+                    if (e.key === "Enter" && highlightedIndex >= 0) {
+                      e.preventDefault();
+                      const item = combinedResults[highlightedIndex];
+
+                      if (item.type === "brand") {
+                        window.location.href = `/phones?brand=${encodeURIComponent(
+                          item.name
+                        )}`;
+                      } else {
+                        window.location.href = `/phones/${item.slug}`;
+                      }
+                    }
+                  }}
                 />
               </div>
 
               {dropdownOpen && (
-                <div className="mt-2 bg-card border rounded-xl shadow-lg text-left max-h-96 overflow-y-auto">
-                  {brandResults.map((brand) => (
+                <div
+                  ref={listRef}
+                  className="mt-2 bg-card border rounded-xl shadow-lg text-left max-h-96 overflow-y-auto"
+                >
+                  {brandResults.map((brand, index) => (
                     <Link
                       key={brand.id}
-                      href={`/phones?brand=${encodeURIComponent(
-                        brand.name
-                      )}`}
-                      className="block px-4 py-2 hover:bg-muted"
+                      data-index={index}
+                      onMouseEnter={() => setHighlightedIndex(index)}
+                      href={`/phones?brand=${encodeURIComponent(brand.name)}`}
+                      className={`block px-4 py-2 hover:bg-muted ${
+                        highlightedIndex === index ? "bg-muted" : ""
+                      }`}
                       onClick={() => setDropdownOpen(false)}
                     >
                       {brand.name}
                     </Link>
                   ))}
 
-                  {modelResults.map((model) => (
+                  {modelResults.map((model, index) => (
                     <Link
                       key={model.id}
+                      data-index={brandResults.length + index}
+                      onMouseEnter={() =>
+                        setHighlightedIndex(brandResults.length + index)
+                      }
                       href={`/phones/${model.slug}`}
-                      className="block px-4 py-2 hover:bg-muted"
+                      className={`block px-4 py-2 hover:bg-muted ${
+                        highlightedIndex === brandResults.length + index
+                          ? "bg-muted"
+                          : ""
+                      }`}
                       onClick={() => setDropdownOpen(false)}
                     >
                       {model.name}
@@ -190,7 +253,6 @@ export default function Home() {
             <PopularBrands />
           </ScrollReveal>
         </Section>
-
       </div>
     </div>
   );
