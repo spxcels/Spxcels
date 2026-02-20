@@ -48,16 +48,14 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
     model.media?.length && model.media.some((m) => m.url)
       ? model.media
       : model.image
-        ? [{ id: 0, url: model.image, type: "IMAGE" as const }]
-        : [{ id: 0, url: "/placeholder-phone.png", type: "IMAGE" as const }];
+      ? [{ id: 0, url: model.image, type: "IMAGE" as const }]
+      : [{ id: 0, url: "/placeholder-phone.png", type: "IMAGE" as const }];
 
-  // ✅ Local store logos
   const storeLogos: Record<string, string> = {
     Amazon: "/logos/amazon.png",
     Flipkart: "/logos/flipkart.png",
   };
 
-  // ✅ Fallback to favicon if no logo found
   const getFavicon = (url: string) => {
     try {
       const domain = new URL(url).hostname;
@@ -70,24 +68,83 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
   const sortedAffiliates =
     model.affiliates?.length
       ? [...model.affiliates].sort((a, b) => {
-        const priceA = Number(a.price?.replace(/[^0-9]/g, "")) || 0;
-        const priceB = Number(b.price?.replace(/[^0-9]/g, "")) || 0;
-        return priceA - priceB;
-      })
+          const priceA = Number(a.price?.replace(/[^0-9]/g, "")) || 0;
+          const priceB = Number(b.price?.replace(/[^0-9]/g, "")) || 0;
+          return priceA - priceB;
+        })
       : [];
 
   const bestDeal = sortedAffiliates[0];
 
+  /* =======================
+     HUMAN LABELS
+  ======================== */
+  const specLabels: Record<string, string> = {
+    os: "Operating System",
+    chipset: "Chipset",
+    cpu: "CPU",
+    gpu: "GPU",
+    displayType: "Display Type",
+    displaySize: "Display Size",
+    resolution: "Resolution",
+    refreshRate: "Refresh Rate",
+    protection: "Screen Protection",
+    mainCamera: "Rear Camera",
+    selfieCamera: "Selfie Camera",
+    videoRecording: "Video Recording",
+    batteryCapacity: "Battery Capacity",
+    chargingSpeed: "Charging Speed",
+    wirelessCharging: "Wireless Charging",
+    dimensions: "Dimensions",
+    weight: "Weight",
+    sim: "SIM",
+    internal: "Storage",
+    cardSlot: "Expandable Storage",
+    network: "Network",
+    features: "Features",
+    colors: "Available Colors",
+  };
+
+  /* =======================
+     AI CLEAN CAMERA FORMATTER
+  ======================== */
+  const cleanCameraSpec = (value: string) => {
+    if (!value) return [];
+
+    const sections = value.split(/\s(?=\d+\s?MP|TOF|LiDAR)/g);
+
+    return sections.map((section) => {
+      const mp = section.match(/(\d+\s?MP)/i)?.[1]?.replace(" ", "");
+      const zoom = section.match(/(\d+x optical zoom)/i)?.[1];
+      const aperture = section.match(/f\/[\d.]+/i)?.[0];
+
+      const lower = section.toLowerCase();
+
+      if (lower.includes("lidar")) return "LiDAR Depth Sensor";
+
+      let label = "";
+
+      if (lower.includes("ultra")) label = "Ultra-wide";
+      else if (lower.includes("tele")) label = "Telephoto";
+      else if (lower.includes("macro")) label = "Macro";
+      else if (lower.includes("wide")) label = "Wide";
+
+      let result = "";
+
+      if (mp) result += mp;
+      if (label) result += ` ${label}`;
+
+      if (zoom) result += ` (${zoom})`;
+      else if (aperture) result += ` (${aperture})`;
+
+      return result.trim();
+    });
+  };
+
   const specGroups: Record<string, string[]> = {
     Networks: ["network"],
     Platform: ["os", "chipset", "cpu", "gpu"],
-    Display: [
-      "displayType",
-      "displaySize",
-      "resolution",
-      "refreshRate",
-      "protection",
-    ],
+    Display: ["displayType", "displaySize", "resolution", "refreshRate", "protection"],
     Camera: ["mainCamera", "selfieCamera", "videoRecording"],
     Battery: ["batteryCapacity", "chargingSpeed", "wirelessCharging"],
     Build: ["dimensions", "weight", "sim", "protection"],
@@ -97,89 +154,46 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      {/* 🔙 Back */}
+      {/* Back */}
       <div className="mb-6">
         <Link
           href="/phones"
-          className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition"
+          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition"
         >
-          <ChevronLeft size={16} className="mr-1" /> Back to Phones
+          <ChevronLeft size={16} className="mr-1" />
+          Back to Phones
         </Link>
       </div>
 
-      {/* 🧩 Layout */}
+      {/* MAIN LAYOUT */}
       <div className="flex flex-col md:flex-row gap-10 items-start">
-        {/* Left - Media Slider */}
         <div className="flex-1">
           <ImageSlider media={mediaList} modelName={model.name} />
         </div>
 
-        {/* Right - Info */}
         <div className="flex-1 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {model.name}
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                Brand: {model.brand.name}
-              </p>
+              <h1 className="text-3xl font-bold text-gray-900">{model.name}</h1>
+              <p className="text-gray-500 text-sm">Brand: {model.brand.name}</p>
             </div>
 
             {bestDeal && (
-              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-lg">
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-4 py-2 rounded-xl">
                 <span className="text-xl font-semibold text-green-600">
                   {bestDeal.price}
                 </span>
-                <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-md ml-1">
+                <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-md">
                   Best Price
                 </span>
               </div>
             )}
           </div>
 
-          {/* Variants */}
-          {model.variants?.length ? (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Variants
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {model.variants.map((v) => (
-                  <span
-                    key={v}
-                    className="px-3 py-1 text-xs bg-gray-200 dark:bg-gray-800 rounded-full"
-                  >
-                    {v}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {/* Colors */}
-          {model.colors?.length ? (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Colors
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {model.colors.map((c) => (
-                  <span
-                    key={c}
-                    className="px-3 py-1 text-xs bg-gray-200 dark:bg-gray-800 rounded-full capitalize"
-                  >
-                    {c}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {/* 💰 Buy Online */}
+          {/* BUY ONLINE */}
           {sortedAffiliates.length ? (
             <div className="pt-4">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
                 Buy Online
               </h3>
 
@@ -191,58 +205,27 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{
-                      scale: 1.03,
-                      boxShadow:
-                        "0px 4px 15px rgba(0, 255, 100, 0.15)",
+                      scale: 1.02,
+                      boxShadow: "0px 6px 18px rgba(0,0,0,0.08)",
                     }}
-                    transition={{ type: "spring", stiffness: 250 }}
-                    className={`flex items-center justify-between w-full sm:w-[280px] border border-border rounded-xl p-3 transition-all cursor-pointer ${idx === 0
-                      ? "bg-green-50 dark:bg-green-900/20"
-                      : "bg-card"
-                      }`}
+                    className={`flex items-center justify-between w-full sm:w-[280px] border border-gray-200 rounded-2xl p-3 bg-white ${
+                      idx === 0 ? "bg-green-50" : ""
+                    }`}
                   >
-                    {/* Left: Logo & Name */}
                     <div className="flex items-center gap-3">
                       <Image
-                        src={
-                          storeLogos[a.name] ||
-                          a.logo ||
-                          getFavicon(a.url)
-                        }
-                        alt={`${a.name || "Store"} logo`}
+                        src={storeLogos[a.name] || a.logo || getFavicon(a.url)}
+                        alt={`${a.name} logo`}
                         width={40}
                         height={40}
                         className="object-contain rounded-md bg-white p-1"
                       />
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">
-                          {a.name || "Store"}
-                        </span>
-                        {idx === 0 && (
-                          <span className="text-[10px] bg-green-500 text-white px-2 py-[1px] rounded-md w-fit mt-1">
-                            Best Price
-                          </span>
-                        )}
-                      </div>
+                      <span className="font-medium text-sm">{a.name}</span>
                     </div>
 
-                    {/* Right: Animated Price */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className="text-right"
-                    >
-                      {a.price ? (
-                        <span className="text-green-600 font-bold text-sm">
-                          {a.price}
-                        </span>
-                      ) : (
-                        <span className="text-gray-500 text-xs">
-                          Price N/A
-                        </span>
-                      )}
-                    </motion.div>
+                    <span className="text-green-600 font-bold text-sm">
+                      {a.price || "N/A"}
+                    </span>
                   </motion.a>
                 ))}
               </div>
@@ -251,12 +234,10 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
         </div>
       </div>
 
-      {/* 📱 Specifications */}
+      {/* SPECIFICATIONS */}
       {model.specs ? (
-        <section className="mt-10">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-            Specifications
-          </h2>
+        <section className="mt-14 space-y-8">
+          <h2 className="text-xl font-semibold text-gray-900">Specifications</h2>
 
           {Object.entries(specGroups).map(([groupName, keys]) => {
             const groupSpecs = keys
@@ -266,22 +247,33 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
             if (!groupSpecs.length) return null;
 
             return (
-              <div key={groupName} className="mb-6">
-                <h3 className="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400">
+              <div key={groupName}>
+                <h3 className="text-lg font-semibold mb-3 text-gray-900">
                   {groupName}
                 </h3>
+
                 <div className="grid sm:grid-cols-2 gap-4">
                   {groupSpecs.map(([key, value]) => (
                     <div
                       key={key}
-                      className="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg"
+                      className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all"
                     >
-                      <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                        {key.replace(/([A-Z])/g, " $1")}
-                      </p>
-                      <p className="font-medium text-gray-800 dark:text-gray-100">
-                        {String(value)}
-                      </p>
+                      <div className="flex gap-4">
+                        <p className="w-40 shrink-0 text-sm text-gray-500">
+                          {specLabels[key] ||
+                            key.replace(/([A-Z])/g, " $1")}
+                        </p>
+
+                        <div className="font-medium text-gray-900 leading-snug space-y-1">
+                          {key === "mainCamera" || key === "selfieCamera" ? (
+                            cleanCameraSpec(String(value)).map((line, i) => (
+                              <p key={i}>• {line}</p>
+                            ))
+                          ) : (
+                            <p>{String(value)}</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -290,7 +282,7 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
           })}
         </section>
       ) : (
-        <p className="mt-10 text-gray-500 dark:text-gray-400 text-sm text-center">
+        <p className="mt-10 text-gray-500 text-sm text-center">
           Specifications not available yet.
         </p>
       )}
