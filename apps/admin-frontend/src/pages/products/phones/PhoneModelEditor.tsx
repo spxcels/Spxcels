@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { auto } from "@/api/auto";
 import { getPhoneSpecs, savePhoneSpecs } from "@/api/phoneSpecs";
-import {
-  BasicInfoSection,
-  SpecsSection,
-} from "./new/sections";
+import { BasicInfoSection, SpecsSection } from "./new/sections";
 import type { PhoneSpecsDraft } from "./new/sections/SpecsSection";
 
 export default function PhoneModelEditor() {
@@ -25,14 +22,17 @@ export default function PhoneModelEditor() {
   const [form, setForm] = useState({
     brandId: brandIdFromQuery
       ? Number(brandIdFromQuery)
-      : null as number | null,
+      : (null as number | null),
     name: "",
     slug: "",
     colors: "",
     variants: "",
   });
 
-  const [specs, setSpecs] = useState<PhoneSpecsDraft>({});
+  /* ⭐ IMPORTANT — correct default shape */
+  const [specs, setSpecs] = useState<PhoneSpecsDraft>({
+    specs: { sections: [] },
+  });
 
   /* ========================= LOAD ========================= */
 
@@ -57,8 +57,16 @@ export default function PhoneModelEditor() {
           variants: (model.variants ?? []).join(", "),
         });
 
-        const specsData = await getPhoneSpecs(numericModelId);
-        setSpecs(specsData ?? {});
+        const specsData = await getPhoneSpecs(
+          numericModelId
+        );
+
+        /* ⭐ FIXED — extract ONLY specs */
+        setSpecs({
+          specs: specsData?.specs ?? {
+            sections: [],
+          },
+        });
       } catch (err) {
         console.error("Failed to load phone model", err);
         alert("Failed to load phone model");
@@ -76,7 +84,10 @@ export default function PhoneModelEditor() {
     key: keyof typeof form,
     value: any
   ) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
   const updateSpecs = <
@@ -85,7 +96,10 @@ export default function PhoneModelEditor() {
     key: K,
     value: PhoneSpecsDraft[K]
   ) => {
-    setSpecs((prev) => ({ ...prev, [key]: value }));
+    setSpecs((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
   const normalizeList = (value: string) =>
@@ -117,7 +131,10 @@ export default function PhoneModelEditor() {
         }
       );
 
-      await savePhoneSpecs(numericModelId, specs);
+      await savePhoneSpecs(
+        numericModelId,
+        specs
+      );
 
       navigate("/admin/products/phones");
     } catch (err) {
@@ -132,7 +149,8 @@ export default function PhoneModelEditor() {
 
   const remove = async () => {
     if (!numericModelId) return;
-    if (!confirm("Delete this model?")) return;
+    if (!confirm("Delete this model?"))
+      return;
 
     try {
       await auto.remove(
@@ -181,13 +199,13 @@ export default function PhoneModelEditor() {
         setCardPreview={() => {}}
       />
 
-      {/* SPECS */}
+      {/* SPECS BUILDER */}
       <SpecsSection
         specs={specs}
         update={updateSpecs}
       />
 
-      {/* MEDIA & AFFILIATES NAV */}
+      {/* MEDIA & AFFILIATES */}
       {numericModelId && (
         <div className="flex flex-wrap gap-4 pt-4 border-t">
           <button

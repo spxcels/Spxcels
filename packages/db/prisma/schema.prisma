@@ -1,6 +1,6 @@
 // ====================================================================
 // 📦 Prisma Schema for Spxcel
-// FINAL – Clean Card Image + Media Slider Architecture
+// FINAL – JSON Specs Engine (Step 1 Foundation)
 // ====================================================================
 
 // --------------------------------------------------
@@ -80,14 +80,13 @@ model PhoneBrand {
 
 // ---------------------------
 // Phone Model
-// ⭐ ONE CARD IMAGE PER MODEL
 // ---------------------------
 model PhoneModel {
   id   Int    @id @default(autoincrement())
   name String
   slug String @unique
 
-  image String? // ⭐ CARD / LISTING IMAGE (ONLY ONE)
+  image String? // ⭐ CARD / LISTING IMAGE
 
   colors   String[]
   variants String[]
@@ -98,7 +97,7 @@ model PhoneModel {
 
   brand      PhoneBrand      @relation(fields: [brandId], references: [id], onDelete: Cascade)
   specs      PhoneSpecs?
-  media      PhoneMedia[] // ⭐ ALL SLIDER IMAGES
+  media      PhoneMedia[]
   affiliates AffiliateLink[]
 
   @@index([slug])
@@ -108,37 +107,14 @@ model PhoneModel {
 }
 
 // ---------------------------
-// Specifications
+// Specifications (⭐ JSON ENGINE)
 // ---------------------------
 model PhoneSpecs {
   id      Int @id @default(autoincrement())
   modelId Int @unique
 
-  os              String?
-  chipset         String?
-  cpu             String?
-  gpu             String?
-  displayType     String?
-  displaySize     String?
-  resolution      String?
-  refreshRate     String?
-  protection      String?
-  mainCamera      String?
-  selfieCamera    String?
-  videoRecording  String?
-  batteryCapacity String?
-  chargingSpeed   String?
-  network         String?
-  sim             String?
-  wifi            String?
-  bluetooth       String?
-  usb             String?
-  sensors         String?
-  dimensions      String?
-  weight          String?
-  buildMaterial   String?
-  releaseDate     String?
-  otherFeatures   String?
+  // ⭐ FLEXIBLE SPECS STRUCTURE
+  specs Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -150,7 +126,7 @@ model PhoneSpecs {
 }
 
 // ---------------------------
-// Media (⭐ SLIDER ONLY)
+// Media (Slider)
 // ---------------------------
 model PhoneMedia {
   id      Int @id @default(autoincrement())
@@ -160,7 +136,7 @@ model PhoneMedia {
   publicId String?
   type     MediaType
 
-  order Int? // ⭐ optional slider ordering
+  order Int?
   alt   String?
 
   createdAt DateTime @default(now())

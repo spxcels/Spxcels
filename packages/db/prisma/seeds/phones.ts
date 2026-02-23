@@ -10,15 +10,9 @@ const __dirname = path.dirname(__filename);
 export default async function seedPhones(prisma: PrismaClient) {
   console.log("📱 Seeding phones, specs, media & affiliate links...");
 
-  // --------------------------------------------------
-  // Paths
-  // --------------------------------------------------
   const root = path.join(__dirname, "..", "..");
   const mediaRoot = path.join(root, "public", "media", "phones");
 
-  // --------------------------------------------------
-  // Helper: read media files
-  // --------------------------------------------------
   function getMediaFiles(modelFolder: string) {
     const modelPath = path.join(mediaRoot, modelFolder);
     const media: { url: string; type: MediaType; alt: string; order: number }[] = [];
@@ -98,22 +92,43 @@ export default async function seedPhones(prisma: PrismaClient) {
   });
 
   // --------------------------------------------------
-  // Specs
+  // Specs (⭐ NEW JSON STRUCTURE)
   // --------------------------------------------------
   await prisma.phoneSpecs.upsert({
     where: { modelId: s25Ultra.id },
     update: {},
     create: {
       modelId: s25Ultra.id,
-      os: "Android 15 (One UI 7.0)",
-      chipset: "Snapdragon 8 Gen 4",
-      batteryCapacity: "5000mAh",
-      chargingSpeed: "45W wired, 15W wireless",
-      displayType: "AMOLED, 120Hz, HDR10+",
-      displaySize: "6.8 inches",
-      mainCamera: "200MP + 50MP + 12MP + 10MP",
-      selfieCamera: "12MP",
-      releaseDate: "Feb 2025",
+      specs: {
+        sections: [
+          {
+            title: "PLATFORM",
+            rows: [
+              {
+                label: "OS",
+                values: [{ text: "Android 15 (One UI 7.0)" }],
+              },
+              {
+                label: "Chipset",
+                values: [{ text: "Snapdragon 8 Gen 4" }],
+              },
+            ],
+          },
+          {
+            title: "DISPLAY",
+            rows: [
+              {
+                label: "Type",
+                values: [{ text: "AMOLED, 120Hz, HDR10+" }],
+              },
+              {
+                label: "Size",
+                values: [{ text: "6.8 inches" }],
+              },
+            ],
+          },
+        ],
+      },
     },
   });
 
@@ -122,25 +137,44 @@ export default async function seedPhones(prisma: PrismaClient) {
     update: {},
     create: {
       modelId: iphone15Pro.id,
-      os: "iOS 17",
-      chipset: "Apple A17 Pro",
-      batteryCapacity: "4300mAh",
-      chargingSpeed: "27W wired, 15W MagSafe",
-      displayType: "Super Retina XDR OLED, 120Hz",
-      displaySize: "6.1 inches",
-      mainCamera: "48MP + 12MP + 12MP",
-      selfieCamera: "12MP",
-      releaseDate: "Sept 2023",
+      specs: {
+        sections: [
+          {
+            title: "PLATFORM",
+            rows: [
+              {
+                label: "OS",
+                values: [{ text: "iOS 17" }],
+              },
+              {
+                label: "Chipset",
+                values: [{ text: "Apple A17 Pro" }],
+              },
+            ],
+          },
+          {
+            title: "DISPLAY",
+            rows: [
+              {
+                label: "Type",
+                values: [{ text: "Super Retina XDR OLED, 120Hz" }],
+              },
+              {
+                label: "Size",
+                values: [{ text: "6.1 inches" }],
+              },
+            ],
+          },
+        ],
+      },
     },
   });
 
   // --------------------------------------------------
-  // Media (SAFE RESET PER MODEL)
+  // Media reset
   // --------------------------------------------------
   await prisma.phoneMedia.deleteMany({
-    where: {
-      modelId: { in: [s25Ultra.id, iphone15Pro.id] },
-    },
+    where: { modelId: { in: [s25Ultra.id, iphone15Pro.id] } },
   });
 
   const samsungMedia = getMediaFiles("samsung/s25-ultra");
@@ -154,12 +188,10 @@ export default async function seedPhones(prisma: PrismaClient) {
   if (mediaData.length) {
     await prisma.phoneMedia.createMany({ data: mediaData });
     console.log(`🖼️ Added ${mediaData.length} media files`);
-  } else {
-    console.log("⚠️ No media files found");
   }
 
   // --------------------------------------------------
-  // Affiliates (SAFE UPSERT)
+  // Affiliates
   // --------------------------------------------------
   await prisma.affiliateLink.upsert({
     where: { modelId_storeName: { modelId: s25Ultra.id, storeName: "Amazon" } },
