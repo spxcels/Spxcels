@@ -57,13 +57,23 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [hideMobileControls, setHideMobileControls] = useState(false);
 
-  /* ================= SMOOTH SCROLL DETECT ================= */
+  /* ================= SCROLL DETECT ================= */
 
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
+    const prev = scrollY.getPrevious() || 0;
+
     setScrolled(latest > 60);
+
+    // Hide on scroll down, show on scroll up
+    if (latest > prev && latest > 80) {
+      setHideMobileControls(true);
+    } else {
+      setHideMobileControls(false);
+    }
   });
 
   /* ================= THEME ================= */
@@ -104,7 +114,6 @@ export default function Header() {
       }`}
     >
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-
         {/* LOGO */}
         <Link
           href="/"
@@ -132,7 +141,7 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* RIGHT */}
+        {/* DESKTOP RIGHT */}
         <div className="hidden md:flex items-center gap-3">
           <button
             onClick={toggleTheme}
@@ -142,8 +151,15 @@ export default function Header() {
           </button>
         </div>
 
-        {/* MOBILE */}
-        <div className="md:hidden flex items-center gap-2">
+        {/* MOBILE CONTROLS */}
+        <motion.div
+          className="md:hidden flex items-center gap-2"
+          animate={{
+            y: hideMobileControls ? -40 : 0,
+            opacity: hideMobileControls ? 0 : 1,
+          }}
+          transition={{ duration: 0.22 }}
+        >
           <button
             onClick={toggleTheme}
             className="p-2 rounded-md hover:bg-muted"
@@ -157,7 +173,7 @@ export default function Header() {
           >
             {open ? <X size={20} /> : <Menu size={20} />}
           </button>
-        </div>
+        </motion.div>
       </div>
 
       {/* MOBILE MENU */}
