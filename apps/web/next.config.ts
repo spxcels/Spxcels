@@ -13,14 +13,13 @@ const nextConfig: NextConfig = {
   // Prisma stays external
   serverExternalPackages: ["@prisma/client", "prisma"],
 
-  // 🚀 Fix: required so Turbopack includes your DB package
+  // Monorepo DB package
   transpilePackages: ["@spxcel/db"],
 
-  // 🚀 Next.js 16 requires this OUTSIDE of "experimental"
+  // Next.js 16 monorepo tracing
   outputFileTracingRoot: join(__dirname, "../../"),
 
   turbopack: {
-    // Must match monorepo root
     root: join(__dirname, "../../"),
   },
 
@@ -28,13 +27,26 @@ const nextConfig: NextConfig = {
     return config;
   },
 
+  /* ================= IMAGES ================= */
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "upload.wikimedia.org", pathname: "/**" },
-      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
-      { protocol: "https", hostname: "example.com", pathname: "/**" }
-    ]
-  }
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "upload.wikimedia.org",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
