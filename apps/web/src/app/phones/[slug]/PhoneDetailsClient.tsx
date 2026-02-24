@@ -78,10 +78,7 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
         if (!res.ok) return;
 
         const data = await res.json();
-
-        if (mounted) {
-          setSuggestions(Array.isArray(data) ? data : []);
-        }
+        if (mounted) setSuggestions(Array.isArray(data) ? data : []);
       } catch (e) {
         console.error("Suggestion fetch error:", e);
       }
@@ -156,6 +153,7 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
 
   return (
     <div className="max-w-6xl px-4 py-10 mx-auto">
+      {/* BACK */}
       <div className="mb-6">
         <Link
           href="/phones"
@@ -166,6 +164,7 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
         </Link>
       </div>
 
+      {/* MAIN */}
       <div className="flex flex-col gap-10 md:flex-row">
         <div className="flex-1">
           <ImageSlider media={mediaList} modelName={model.name} />
@@ -210,8 +209,7 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
                 <button
                   key={c}
                   onClick={() => setSelectedColor(c)}
-                  className={`whitespace-nowrap flex-shrink-0 px-3 py-1.5 text-xs rounded-lg border
-                  ${
+                  className={`whitespace-nowrap flex-shrink-0 px-3 py-1.5 text-xs rounded-lg border ${
                     selectedColor === c
                       ? "border-black bg-gray-50"
                       : "border-gray-200 hover:border-gray-400"
@@ -265,10 +263,41 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
       {/* SPECIFICATIONS */}
       <section className="mt-14">
         <h2 className="mb-6 text-xl font-semibold">Specifications</h2>
-        <p className="text-sm text-gray-500">No specs found.</p>
+
+        {specs?.sections?.length ? (
+          specs.sections.map((section: any) => (
+            <div key={section.title} className="mb-10">
+              <h3 className="mb-3 text-lg font-semibold">{section.title}</h3>
+
+              <div className="overflow-hidden border rounded-xl">
+                {section.rows.map((row: any) => (
+                  <div
+                    key={row.label}
+                    className="grid grid-cols-[140px_1fr] gap-4 px-4 py-3 border-b last:border-b-0"
+                  >
+                    <div className="text-sm text-gray-500">{row.label}</div>
+
+                    <div className="space-y-1 text-sm text-gray-800">
+                      {row.values?.map((v: any, i: number) =>
+                        cleanSpecText(v.text).map((line, j) => (
+                          <p key={`${i}-${j}`} className="flex gap-2">
+                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gray-400" />
+                            <span>{line}</span>
+                          </p>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-sm text-gray-500">No specs found.</p>
+        )}
       </section>
 
-      {/* SUGGESTIONS (FIXED IMAGES) */}
+      {/* SUGGESTIONS */}
       {suggestions.length > 0 && (
         <section className="mt-16">
           <h2 className="mb-6 text-xl font-semibold">You may also like</h2>
@@ -278,9 +307,9 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
               <Link
                 key={phone.id}
                 href={`/phones/${phone.slug}`}
-                className="p-3 transition border rounded-2xl hover:shadow-lg"
+                className="overflow-hidden transition bg-white border rounded-2xl hover:shadow-lg"
               >
-                <div className="relative w-full mb-3 overflow-hidden bg-gray-100 h-44 rounded-xl">
+                <div className="relative flex items-center justify-center w-full h-52 bg-gray-50">
                   <Image
                     src={
                       phone.image?.trim()
@@ -290,12 +319,18 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
                     alt={phone.name}
                     fill
                     sizes="(max-width:768px) 50vw, 25vw"
-                    className="object-contain p-2"
+                    className="object-contain p-4"
                   />
                 </div>
 
-                <p className="text-sm font-semibold">{phone.name}</p>
-                <p className="text-xs text-gray-500">{phone.brand.name}</p>
+                <div className="p-3">
+                  <p className="text-sm font-semibold leading-snug line-clamp-2">
+                    {phone.name}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {phone.brand.name}
+                  </p>
+                </div>
               </Link>
             ))}
           </div>
