@@ -51,8 +51,20 @@ interface Model {
 /* ================= COMPONENT ================= */
 
 export default function PhoneDetailsClient({ model }: { model: Model }) {
-  /* ================= AUTO SUGGESTIONS ================= */
   const [suggestions, setSuggestions] = useState<SuggestedPhone[]>([]);
+
+  const variants = ["128GB", "256GB", "512GB", "1TB"];
+
+  const colors = [
+    "Natural Titanium",
+    "Black Titanium",
+    "White Titanium",
+    "Blue Titanium",
+  ];
+
+  const [selectedColor, setSelectedColor] = useState(colors[0]);
+
+  /* ================= AUTO SUGGESTIONS ================= */
 
   useEffect(() => {
     let mounted = true;
@@ -98,8 +110,7 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
 
   const getFavicon = (url: string) => {
     try {
-      const domain = new URL(url).hostname;
-      return `https://www.google.com/s2/favicons?domain=${domain}`;
+      return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}`;
     } catch {
       return "/logos/default.png";
     }
@@ -115,12 +126,9 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
       : [];
 
   const bestDeal = sortedAffiliates[0];
-  const specs = (model.specs as any)?.specs || (model.specs as any);
+  const specs = (model.specs as any)?.specs || model.specs;
 
-  const variants = ["128GB", "256GB", "512GB", "1TB"];
-  const colors = ["#f5f5f5", "#3d3d3d", "#bfa37a", "#1f2a44"];
-
-  /* ================= AI CLEAN SPECS ================= */
+  /* ================= CLEAN SPECS ================= */
 
   const cleanSpecText = (text: string): string[] => {
     if (!text) return [text];
@@ -130,11 +138,9 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
 
     const mp = text.match(/\d+\s?mp/i);
     if (mp) output.push(`${mp[0]} high-resolution sensor`);
-    if (lower.includes("ois"))
-      output.push("Optical image stabilization (OIS)");
+    if (lower.includes("ois")) output.push("Optical image stabilization (OIS)");
     if (lower.includes("pdaf")) output.push("Fast auto-focus (PDAF)");
     if (lower.includes("ultrawide")) output.push("Ultra-wide lens");
-    else if (lower.includes("wide")) output.push("Wide-angle lens");
     if (lower.includes("telephoto")) output.push("Telephoto zoom lens");
 
     const hz = text.match(/\d+\s?hz/i);
@@ -143,9 +149,6 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
     const mah = text.match(/\d+\s?mah/i);
     if (mah) output.push(`${mah[0]} battery capacity`);
 
-    if (lower.includes("fast charging"))
-      output.push("Fast charging support");
-
     return output.length ? output : [text];
   };
 
@@ -153,7 +156,6 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
 
   return (
     <div className="max-w-6xl px-4 py-10 mx-auto">
-      {/* Back */}
       <div className="mb-6">
         <Link
           href="/phones"
@@ -164,8 +166,7 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
         </Link>
       </div>
 
-      {/* MAIN */}
-      <div className="flex flex-col items-start gap-10 md:flex-row">
+      <div className="flex flex-col gap-10 md:flex-row">
         <div className="flex-1">
           <ImageSlider media={mediaList} modelName={model.name} />
         </div>
@@ -187,13 +188,13 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
           )}
 
           {/* Variants */}
-          <div className="p-4 bg-white border shadow-sm rounded-2xl">
+          <div className="p-4 bg-white border rounded-2xl">
             <h3 className="mb-3 text-sm font-semibold">Variants</h3>
             <div className="flex flex-wrap gap-2">
               {variants.map((v) => (
                 <button
                   key={v}
-                  className="px-4 py-2 text-sm font-medium transition border rounded-xl hover:border-black"
+                  className="px-3 py-1.5 text-xs border rounded-lg hover:border-black"
                 >
                   {v}
                 </button>
@@ -202,23 +203,31 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
           </div>
 
           {/* Colors */}
-          <div className="p-4 bg-white border shadow-sm rounded-2xl">
+          <div className="p-4 bg-white border rounded-2xl">
             <h3 className="mb-3 text-sm font-semibold">Colors</h3>
-            <div className="flex gap-3">
+            <div className="flex gap-2 pb-1 overflow-x-auto">
               {colors.map((c) => (
                 <button
                   key={c}
-                  className="w-8 h-8 transition border-2 border-gray-300 rounded-full hover:scale-110"
-                  style={{ backgroundColor: c }}
-                />
+                  onClick={() => setSelectedColor(c)}
+                  className={`whitespace-nowrap flex-shrink-0 px-3 py-1.5 text-xs rounded-lg border
+                  ${
+                    selectedColor === c
+                      ? "border-black bg-gray-50"
+                      : "border-gray-200 hover:border-gray-400"
+                  }`}
+                >
+                  {c}
+                </button>
               ))}
             </div>
           </div>
 
-          {/* Affiliate */}
+          {/* BUY ONLINE */}
           {sortedAffiliates.length > 0 && (
-            <div className="p-4 border border-green-200 shadow-sm rounded-2xl bg-green-50">
+            <div className="p-4 border border-green-200 bg-green-50 rounded-2xl">
               <h3 className="mb-3 text-sm font-semibold">Buy Online</h3>
+
               <div className="space-y-3">
                 {sortedAffiliates.map((a) => (
                   <motion.a
@@ -227,20 +236,21 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.01 }}
-                    className="flex items-center justify-between p-3 transition bg-white border border-green-200 rounded-xl hover:shadow-md"
+                    className="flex items-center justify-between p-3 bg-white border border-green-200 rounded-xl"
                   >
                     <div className="flex items-center gap-3">
                       <Image
                         src={storeLogos[a.name] || a.logo || getFavicon(a.url)}
                         alt={a.name}
-                        width={36}
-                        height={36}
+                        width={30}
+                        height={30}
                       />
                       <div>
                         <p className="text-sm font-medium">{a.name}</p>
                         <p className="text-xs text-gray-500">Trusted seller</p>
                       </div>
                     </div>
+
                     <span className="text-lg font-bold text-green-600">
                       {a.price}
                     </span>
@@ -255,41 +265,10 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
       {/* SPECIFICATIONS */}
       <section className="mt-14">
         <h2 className="mb-6 text-xl font-semibold">Specifications</h2>
-
-        {specs?.sections?.length ? (
-          specs.sections.map((section: any) => (
-            <div key={section.title} className="mb-10">
-              <h3 className="mb-3 text-lg font-semibold">{section.title}</h3>
-
-              <div className="overflow-hidden border rounded-xl">
-                {section.rows.map((row: any) => (
-                  <div
-                    key={row.label}
-                    className="grid grid-cols-[140px_1fr] gap-4 border-b last:border-b-0 px-4 py-3"
-                  >
-                    <div className="text-sm text-gray-500">{row.label}</div>
-
-                    <div className="space-y-1 text-sm text-gray-800">
-                      {row.values?.map((v: any, i: number) =>
-                        cleanSpecText(v.text).map((line, j) => (
-                          <p key={`${i}-${j}`} className="flex gap-2">
-                            <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-gray-400" />
-                            <span>{line}</span>
-                          </p>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-sm text-gray-500">No specs found.</p>
-        )}
+        <p className="text-sm text-gray-500">No specs found.</p>
       </section>
 
-      {/* AUTO RECOMMENDATIONS */}
+      {/* SUGGESTIONS (FIXED IMAGES) */}
       {suggestions.length > 0 && (
         <section className="mt-16">
           <h2 className="mb-6 text-xl font-semibold">You may also like</h2>
@@ -301,13 +280,20 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
                 href={`/phones/${phone.slug}`}
                 className="p-3 transition border rounded-2xl hover:shadow-lg"
               >
-                <Image
-                  src={phone.image || "/placeholder-phone.png"}
-                  alt={phone.name}
-                  width={300}
-                  height={300}
-                  className="object-cover mb-3 rounded-xl"
-                />
+                <div className="relative w-full mb-3 overflow-hidden bg-gray-100 h-44 rounded-xl">
+                  <Image
+                    src={
+                      phone.image?.trim()
+                        ? phone.image
+                        : "/placeholder-phone.png"
+                    }
+                    alt={phone.name}
+                    fill
+                    sizes="(max-width:768px) 50vw, 25vw"
+                    className="object-contain p-2"
+                  />
+                </div>
+
                 <p className="text-sm font-semibold">{phone.name}</p>
                 <p className="text-xs text-gray-500">{phone.brand.name}</p>
               </Link>
