@@ -22,6 +22,7 @@ import {
 
 const ThemeIcon = ({ isDark }: { isDark: boolean }) => {
   const [mounted, setMounted] = useState(false);
+
   useEffect(() => setMounted(true), []);
 
   if (!mounted) return isDark ? <Sun size={18} /> : <Moon size={18} />;
@@ -34,6 +35,7 @@ const ThemeIcon = ({ isDark }: { isDark: boolean }) => {
           initial={{ rotate: 90, opacity: 0 }}
           animate={{ rotate: 0, opacity: 1 }}
           exit={{ rotate: -90, opacity: 0 }}
+          transition={{ duration: 0.2 }}
         >
           <Sun size={18} />
         </motion.div>
@@ -43,6 +45,7 @@ const ThemeIcon = ({ isDark }: { isDark: boolean }) => {
           initial={{ rotate: -90, opacity: 0 }}
           animate={{ rotate: 0, opacity: 1 }}
           exit={{ rotate: 90, opacity: 0 }}
+          transition={{ duration: 0.2 }}
         >
           <Moon size={18} />
         </motion.div>
@@ -57,22 +60,41 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [hideMobileControls, setHideMobileControls] = useState(false);
-
-  /* ================= SCROLL DETECT ================= */
+  const [hideHeader, setHideHeader] = useState(false);
 
   const { scrollY } = useScroll();
 
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    const prev = scrollY.getPrevious() || 0;
+  /* ================= SMART SCROLL LOGIC ================= */
 
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const prev = scrollY.getPrevious() ?? 0;
+    const diff = latest - prev;
+
+    // header background
     setScrolled(latest > 60);
 
-    // Hide on scroll down, show on scroll up
-    if (latest > prev && latest > 80) {
-      setHideMobileControls(true);
+    // ignore tiny mobile jitter
+    if (Math.abs(diff) < 4) return;
+
+    /* ⭐ AUTO CLOSE MENU WHEN SCROLLING */
+    if (open) {
+      setOpen(false);
+      setHideHeader(false);
+      return;
+    }
+
+    // near top → always visible
+    if (latest < 40) {
+      setHideHeader(false);
+      return;
+    }
+
+    // scroll down → hide
+    if (diff > 0) {
+      setHideHeader(true);
     } else {
-      setHideMobileControls(false);
+      // scroll up → show
+      setHideHeader(false);
     }
   });
 
@@ -106,14 +128,16 @@ export default function Header() {
   /* ================= UI ================= */
 
   return (
-    <header
-      className={`fixed top-0 left-0 z-50 w-full transition-all duration-300 ${
+    <motion.header
+      animate={{ y: hideHeader ? -80 : 0 }}
+      transition={{ duration: 0.28, ease: "easeOut" }}
+      className={`fixed top-0 left-0 z-50 w-full will-change-transform transition-all duration-300 ${
         scrolled
           ? "bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm"
           : "bg-transparent"
       }`}
     >
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="flex items-center justify-between h-16 max-w-6xl px-6 mx-auto">
         {/* LOGO */}
         <Link
           href="/"
@@ -125,7 +149,7 @@ export default function Header() {
         </Link>
 
         {/* DESKTOP NAV */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="items-center hidden gap-6 md:flex">
           {navItems.map((item) => (
             <Link
               key={item.name}
@@ -142,38 +166,31 @@ export default function Header() {
         </nav>
 
         {/* DESKTOP RIGHT */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="items-center hidden gap-3 md:flex">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-md hover:bg-muted transition"
+            className="p-2 transition rounded-md hover:bg-muted"
           >
             <ThemeIcon isDark={isDark} />
           </button>
         </div>
 
         {/* MOBILE CONTROLS */}
-        <motion.div
-          className="md:hidden flex items-center gap-2"
-          animate={{
-            y: hideMobileControls ? -40 : 0,
-            opacity: hideMobileControls ? 0 : 1,
-          }}
-          transition={{ duration: 0.22 }}
-        >
+        <div className="flex items-center gap-2 md:hidden">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-md hover:bg-muted"
+            className="p-2 transition rounded-md hover:bg-muted"
           >
             <ThemeIcon isDark={isDark} />
           </button>
 
           <button
             onClick={() => setOpen((o) => !o)}
-            className="p-2 rounded-md hover:bg-muted"
+            className="p-2 transition rounded-md hover:bg-muted"
           >
             {open ? <X size={20} /> : <Menu size={20} />}
           </button>
-        </motion.div>
+        </div>
       </div>
 
       {/* MOBILE MENU */}
@@ -183,14 +200,15 @@ export default function Header() {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="md:hidden bg-background/90 backdrop-blur-lg px-6 py-4 space-y-3"
+            transition={{ duration: 0.2 }}
+            className="px-6 py-4 space-y-3 border-b md:hidden bg-background/90 backdrop-blur-lg border-border/40"
           >
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="block text-sm font-medium text-muted-foreground hover:text-foreground"
+                className="block text-sm font-medium transition text-muted-foreground hover:text-foreground"
               >
                 {item.name}
               </Link>
@@ -198,6 +216,6 @@ export default function Header() {
           </motion.nav>
         )}
       </AnimatePresence>
-    </header>
+    </motion.header>
   );
 }
