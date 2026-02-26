@@ -145,7 +145,7 @@ export default function Header() {
             scrolled ? "text-foreground" : "text-foreground/90"
           }`}
         >
-          Spxcel
+          Spxcels
         </Link>
 
         {/* DESKTOP NAV */}

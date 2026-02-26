@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -9,6 +9,7 @@ import AutoHeroPhone from "@/components/home/AutoHeroPhone";
 import TrendingPhones from "@/components/home/TrendingPhones";
 import FeaturedComparison from "@/components/home/FeaturedComparison";
 import PopularBrands from "@/components/home/PopularBrands";
+import SupportSection from "@/components/home/SupportSection";
 
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import CinematicBackground from "@/components/ui/CinematicBackground";
@@ -23,15 +24,14 @@ interface SearchResult {
 }
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
-  // Elite navigation
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
-
-  const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  /* ================= CINEMATIC GLOW ================= */
 
   const { scrollYProgress } = useScroll();
   const glowY = useTransform(scrollYProgress, [0, 1], [0, 250]);
@@ -40,84 +40,98 @@ export default function Home() {
   /* ================= SEARCH ================= */
 
   useEffect(() => {
-    if (!searchQuery) {
-      setSearchResults([]);
-      setDropdownOpen(false);
-      setHighlightedIndex(-1);
+    const trimmed = query.trim();
+
+    if (!trimmed) {
+      setResults([]);
+      setOpen(false);
+      setActiveIndex(-1);
       return;
     }
 
     const timeout = setTimeout(async () => {
       try {
         const res = await fetch(
-          `/api/search?search=${encodeURIComponent(searchQuery)}`
+          `/api/search?search=${encodeURIComponent(trimmed)}`
         );
 
         const data = await res.json();
-        setSearchResults(data.results || []);
-        setDropdownOpen(true);
-        setHighlightedIndex(-1);
-      } catch (err) {
-        console.error("Search failed", err);
+        setResults(data.results || []);
+        setOpen(true);
+        setActiveIndex(-1);
+      } catch (e) {
+        console.error("Search failed:", e);
       }
     }, 250);
 
     return () => clearTimeout(timeout);
-  }, [searchQuery]);
+  }, [query]);
 
-  // auto scroll selected result
+  /* ================= COMBINED RESULTS ================= */
+
+  const combinedResults = useMemo(() => {
+    const brands = results.filter((r) => r.type === "brand");
+    const models = results.filter((r) => r.type === "model");
+    return [...brands, ...models];
+  }, [results]);
+
+  /* ================= AUTO SCROLL ACTIVE ================= */
+
   useEffect(() => {
-    if (!listRef.current || highlightedIndex < 0) return;
+    if (!listRef.current || activeIndex < 0) return;
 
     const el = listRef.current.querySelector(
-      `[data-index="${highlightedIndex}"]`
+      `[data-index="${activeIndex}"]`
     ) as HTMLElement | null;
 
     el?.scrollIntoView({ block: "nearest" });
-  }, [highlightedIndex]);
+  }, [activeIndex]);
 
-  const brandResults = searchResults.filter(
-    (r) => r.type === "brand"
-  );
+  /* ================= HELPERS ================= */
 
-  const modelResults = searchResults.filter(
-    (r) => r.type === "model"
-  );
-
-  const combinedResults = [...brandResults, ...modelResults];
+  const navigateToResult = (item: SearchResult) => {
+    if (item.type === "brand") {
+      window.location.href = `/phones?brand=${encodeURIComponent(item.name)}`;
+    } else {
+      window.location.href = `/phones/${item.slug}`;
+    }
+  };
 
   /* ================= UI ================= */
 
   return (
-    <div className="min-h-screen text-foreground relative overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden text-foreground">
       <CinematicBackground />
 
       <div className="relative z-10">
-        <section className="px-6 min-h-[80vh] flex items-center py-16 md:py-24 relative overflow-hidden">
+        {/* ================= HERO ================= */}
+        <section className="relative flex items-center min-h-[80vh] px-6 py-16 overflow-hidden md:py-24">
 
+          {/* glowing background */}
           <motion.div
             style={{ y: glowY, opacity: glowOpacity }}
             className="absolute inset-0 pointer-events-none"
           >
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-purple-400/20 blur-[120px] rounded-full" />
-            <div className="absolute top-20 left-1/3 w-[500px] h-[500px] bg-sky-400/20 blur-[120px] rounded-full" />
+            <div className="absolute left-1/2 top-0 h-[700px] w-[700px] -translate-x-1/2 rounded-full bg-purple-400/20 blur-[120px]" />
+            <div className="absolute left-1/3 top-20 h-[500px] w-[500px] rounded-full bg-sky-400/20 blur-[120px]" />
           </motion.div>
 
-          <div className="relative z-10 max-w-6xl mx-auto flex flex-col items-center text-center">
+          <div className="relative z-10 flex flex-col items-center max-w-6xl mx-auto text-center">
 
             <motion.h1
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-5xl sm:text-6xl font-bold"
+              className="text-5xl font-bold sm:text-6xl"
             >
-              Spxcel
+              Spxcels
             </motion.h1>
 
             <p className="mt-3 text-lg text-muted-foreground">
               Search. Compare. Choose your next phone.
             </p>
 
+            {/* SEARCH BOX */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1 }}
@@ -125,114 +139,94 @@ export default function Home() {
               className="w-full max-w-2xl mt-8"
             >
               <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <MagnifyingGlassIcon className="absolute w-5 h-5 -translate-y-1/2 left-4 top-1/2 text-muted-foreground" />
 
                 <input
-                  ref={inputRef}
                   type="text"
                   placeholder="Search phones or brands..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 rounded-full border border-border bg-card/90 backdrop-blur"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="w-full py-4 pl-12 pr-4 border rounded-full bg-card/90 border-border backdrop-blur"
                   onKeyDown={(e) => {
-                    if (!dropdownOpen || combinedResults.length === 0) return;
+                    if (!open || combinedResults.length === 0) return;
 
                     if (e.key === "ArrowDown") {
                       e.preventDefault();
-                      setHighlightedIndex((prev) =>
-                        prev < combinedResults.length - 1 ? prev + 1 : 0
+                      setActiveIndex((p) =>
+                        p < combinedResults.length - 1 ? p + 1 : 0
                       );
                     }
 
                     if (e.key === "ArrowUp") {
                       e.preventDefault();
-                      setHighlightedIndex((prev) =>
-                        prev > 0 ? prev - 1 : combinedResults.length - 1
+                      setActiveIndex((p) =>
+                        p > 0 ? p - 1 : combinedResults.length - 1
                       );
                     }
 
                     if (e.key === "Escape") {
-                      setDropdownOpen(false);
-                      setHighlightedIndex(-1);
+                      setOpen(false);
+                      setActiveIndex(-1);
                     }
 
-                    if (e.key === "Enter" && highlightedIndex >= 0) {
+                    if (e.key === "Enter" && activeIndex >= 0) {
                       e.preventDefault();
-                      const item = combinedResults[highlightedIndex];
-
-                      if (item.type === "brand") {
-                        window.location.href = `/phones?brand=${encodeURIComponent(
-                          item.name
-                        )}`;
-                      } else {
-                        window.location.href = `/phones/${item.slug}`;
-                      }
+                      navigateToResult(combinedResults[activeIndex]);
                     }
                   }}
                 />
               </div>
 
-              {dropdownOpen && (
+              {/* DROPDOWN */}
+              {open && (
                 <div
                   ref={listRef}
-                  className="mt-2 bg-card border rounded-xl shadow-lg text-left max-h-96 overflow-y-auto"
+                  className="mt-2 overflow-y-auto text-left border shadow-lg max-h-96 rounded-xl bg-card"
                 >
-                  {brandResults.map((brand, index) => (
+                  {combinedResults.map((item, index) => (
                     <Link
-                      key={brand.id}
+                      key={`${item.type}-${item.id}`}
                       data-index={index}
-                      onMouseEnter={() => setHighlightedIndex(index)}
-                      href={`/phones?brand=${encodeURIComponent(brand.name)}`}
-                      className={`block px-4 py-2 hover:bg-muted ${
-                        highlightedIndex === index ? "bg-muted" : ""
-                      }`}
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      {brand.name}
-                    </Link>
-                  ))}
-
-                  {modelResults.map((model, index) => (
-                    <Link
-                      key={model.id}
-                      data-index={brandResults.length + index}
-                      onMouseEnter={() =>
-                        setHighlightedIndex(brandResults.length + index)
+                      href={
+                        item.type === "brand"
+                          ? `/phones?brand=${encodeURIComponent(item.name)}`
+                          : `/phones/${item.slug}`
                       }
-                      href={`/phones/${model.slug}`}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      onClick={() => setOpen(false)}
                       className={`block px-4 py-2 hover:bg-muted ${
-                        highlightedIndex === brandResults.length + index
-                          ? "bg-muted"
-                          : ""
+                        activeIndex === index ? "bg-muted" : ""
                       }`}
-                      onClick={() => setDropdownOpen(false)}
                     >
-                      {model.name}
+                      {item.name}
                     </Link>
                   ))}
                 </div>
               )}
             </motion.div>
 
-            <div className="flex gap-3 mt-6 flex-wrap justify-center">
+            {/* CTA */}
+            <div className="flex flex-wrap justify-center gap-3 mt-6">
               <Link
                 href="/phones"
-                className="px-6 py-3 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition"
+                className="px-6 py-3 transition rounded-full bg-primary text-primary-foreground hover:opacity-90"
               >
                 All Phones
               </Link>
 
               <Link
                 href="/compare"
-                className="px-6 py-3 rounded-full bg-muted text-muted-foreground hover:opacity-90 transition"
+                className="px-6 py-3 transition rounded-full bg-muted text-muted-foreground hover:opacity-90"
               >
                 Compare
               </Link>
             </div>
           </div>
 
-          <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-b from-transparent to-background pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-full h-48 pointer-events-none bg-gradient-to-b from-transparent to-background" />
         </section>
+
+        {/* ================= CONTENT SECTIONS ================= */}
 
         <Section>
           <AutoHeroPhone />
@@ -251,6 +245,13 @@ export default function Home() {
         <Section layered>
           <ScrollReveal>
             <PopularBrands />
+          </ScrollReveal>
+        </Section>
+
+        {/* ⭐ DONATE / SUPPORT SECTION */}
+        <Section>
+          <ScrollReveal>
+            <SupportSection />
           </ScrollReveal>
         </Section>
       </div>

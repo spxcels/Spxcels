@@ -59,22 +59,6 @@ export default function ComparePage() {
     setHighlightedIndex(0);
   }, [search, devices, selectedDevices]);
 
-  /* ================= OUTSIDE CLICK ================= */
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        !inputRef.current?.contains(e.target as Node) &&
-        !resultsRef.current?.contains(e.target as Node)
-      ) {
-        setDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
   /* ================= KEYBOARD ================= */
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -83,26 +67,50 @@ export default function ComparePage() {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setHighlightedIndex((p) =>
-        Math.min(p + 1, filteredDevices.length - 1)
+        p < filteredDevices.length - 1 ? p + 1 : 0
       );
     }
 
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      setHighlightedIndex((p) => Math.max(p - 1, 0));
+      setHighlightedIndex((p) =>
+        p > 0 ? p - 1 : filteredDevices.length - 1
+      );
     }
 
     if (e.key === "Enter") {
       e.preventDefault();
       addDevice(filteredDevices[highlightedIndex]);
     }
+
+    if (e.key === "Escape") {
+      setDropdownOpen(false);
+    }
   };
+
+  /* auto scroll highlighted item */
+  useEffect(() => {
+    const el = resultsRef.current?.querySelector(
+      `[data-index="${highlightedIndex}"]`
+    ) as HTMLElement | null;
+
+    el?.scrollIntoView({ block: "nearest" });
+  }, [highlightedIndex]);
+
+  /* ================= SPECS ================= */
+
+  const allSpecs = useMemo(() => {
+    const set = new Set<string>();
+    selectedDevices.forEach((d) => {
+      Object.keys(d.specs || {}).forEach((k) => set.add(k));
+    });
+    return Array.from(set);
+  }, [selectedDevices]);
 
   /* ================= ACTIONS ================= */
 
   const addDevice = (device: Device) => {
-    if (!device) return;
-    if (selectedDevices.length >= MAX_DEVICES) return;
+    if (!device || selectedDevices.length >= MAX_DEVICES) return;
 
     setSelectedDevices((p) => [...p, device]);
     setSearch("");
@@ -115,22 +123,6 @@ export default function ComparePage() {
   const removeDevice = (id: number) => {
     setSelectedDevices((p) => p.filter((d) => d.id !== id));
   };
-
-  /* ================= SPECS ================= */
-
-  const ignored = ["id", "modelId", "createdAt", "updatedAt"];
-
-  const allSpecs = useMemo(() => {
-    const set = new Set<string>();
-
-    selectedDevices.forEach((d) => {
-      Object.keys(d.specs || {}).forEach((k) => {
-        if (!ignored.includes(k)) set.add(k);
-      });
-    });
-
-    return Array.from(set);
-  }, [selectedDevices]);
 
   /* ================= UI ================= */
 
@@ -150,32 +142,41 @@ export default function ComparePage() {
               : "Search devices..."
           }
           disabled={selectedDevices.length >= MAX_DEVICES}
-          className="w-full rounded-xl border border-border px-5 py-3 pr-10"
+          className="w-full rounded-xl border border-border px-5 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-primary/40"
+          role="combobox"
+          aria-expanded={dropdownOpen}
+          aria-controls="device-results"
         />
 
         <MagnifyingGlassIcon className="w-5 h-5 absolute right-4 top-3.5 text-muted-foreground" />
 
         {dropdownOpen && (
           <div
+            id="device-results"
             ref={resultsRef}
+            role="listbox"
             className="absolute w-full mt-2 bg-background border border-border rounded-xl shadow-lg max-h-60 overflow-auto z-10"
           >
             {filteredDevices.map((d, i) => (
-              <div
+              <button
                 key={d.id}
+                data-index={i}
+                role="option"
+                aria-selected={i === highlightedIndex}
                 onClick={() => addDevice(d)}
-                className={`px-4 py-2 cursor-pointer ${
-                  i === highlightedIndex ? "bg-muted" : "hover:bg-muted/60"
+                className={`w-full text-left px-4 py-2 ${
+                  i === highlightedIndex
+                    ? "bg-muted"
+                    : "hover:bg-muted/60"
                 }`}
               >
                 {d.brand} {d.name}
-              </div>
+              </button>
             ))}
           </div>
         )}
       </div>
 
-      {/* HEADER */}
       {selectedDevices.length > 0 && (
         <div className="border rounded-2xl overflow-hidden">
 
@@ -186,28 +187,27 @@ export default function ComparePage() {
               <div key={d.id} className="relative p-4 md:p-6 text-center">
                 <button
                   onClick={() => removeDevice(d.id)}
-                  className="absolute right-3 top-3"
+                  className="absolute right-3 top-3 focus:outline-none focus:ring-2 rounded"
                 >
                   <XMarkIcon className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
 
                 <img
                   src={d.image}
-                  className="w-24 h-24 md:w-40 md:h-40 object-contain mx-auto mb-2 md:mb-3"
+                  className="w-24 h-24 md:w-40 md:h-40 object-contain mx-auto mb-2"
                 />
 
-                <h2 className="font-bold text-sm md:text-lg leading-snug">
+                <h2 className="font-bold text-sm md:text-lg">
                   {d.brand} {d.name}
                 </h2>
               </div>
             ))}
           </div>
 
-          {/* SPECS */}
           {selectedDevices.length === 2 &&
             allSpecs.map((spec, idx) => {
-              const a = selectedDevices[0]?.specs?.[spec] ?? "-";
-              const b = selectedDevices[1]?.specs?.[spec] ?? "-";
+              const a = selectedDevices[0].specs?.[spec] || "-";
+              const b = selectedDevices[1].specs?.[spec] || "-";
 
               return (
                 <div
@@ -216,26 +216,12 @@ export default function ComparePage() {
                     idx % 2 === 0 ? "bg-muted/20" : ""
                   }`}
                 >
-                  {/* Desktop label */}
-                  <div className="hidden md:block p-4 font-medium capitalize">
+                  <div className="hidden md:block p-4 font-medium">
                     {spec}
                   </div>
 
-                  {/* MOBILE CENTER LINE SECTION TITLE */}
-                  <div className="md:hidden col-span-2 flex items-center px-3 py-2">
-                    <div className="flex-1 h-px bg-border" />
-                    <span className="px-2 text-[10px] tracking-widest font-semibold text-muted-foreground uppercase whitespace-nowrap">
-                      {spec}
-                    </span>
-                    <div className="flex-1 h-px bg-border" />
-                  </div>
-
-                  <div className="p-3 md:p-4 text-center text-sm md:text-base">
-                    {a}
-                  </div>
-                  <div className="p-3 md:p-4 text-center text-sm md:text-base">
-                    {b}
-                  </div>
+                  <div className="p-3 md:p-4 text-center">{a}</div>
+                  <div className="p-3 md:p-4 text-center">{b}</div>
                 </div>
               );
             })}

@@ -48,23 +48,20 @@ interface Model {
   affiliates?: Affiliate[];
 }
 
-/* ================= COMPONENT ================= */
+/* ================= CONSTANTS ================= */
+
+const DEFAULT_VARIANTS = ["128GB", "256GB", "512GB", "1TB"];
+
+const DEFAULT_COLORS = [
+  "Natural Titanium",
+  "Black Titanium",
+  "White Titanium",
+  "Blue Titanium",
+];
 
 export default function PhoneDetailsClient({ model }: { model: Model }) {
   const [suggestions, setSuggestions] = useState<SuggestedPhone[]>([]);
-
-  const variants = ["128GB", "256GB", "512GB", "1TB"];
-
-  const colors = [
-    "Natural Titanium",
-    "Black Titanium",
-    "White Titanium",
-    "Blue Titanium",
-  ];
-
-  const [selectedColor, setSelectedColor] = useState(colors[0]);
-
-  /* ================= AUTO SUGGESTIONS ================= */
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLORS[0]);
 
   useEffect(() => {
     let mounted = true;
@@ -72,7 +69,9 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
     const loadSuggestions = async () => {
       try {
         const res = await fetch(
-          `/api/devices/suggestions?brand=${model.brand.name}&id=${model.id}`
+          `/api/devices/suggestions?q=${encodeURIComponent(
+            model.name
+          )}&id=${model.id}`
         );
 
         if (!res.ok) return;
@@ -85,20 +84,15 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
     };
 
     loadSuggestions();
-
     return () => {
       mounted = false;
     };
-  }, [model.id, model.brand.name]);
-
-  /* ================= MEDIA ================= */
+  }, [model.id, model.name]);
 
   const mediaList =
-    model.media?.length && model.media.some((m) => m.url)
+    model.media?.length
       ? model.media
-      : model.image
-      ? [{ id: 0, url: model.image, type: "IMAGE" as const }]
-      : [{ id: 0, url: "/placeholder-phone.png", type: "IMAGE" as const }];
+      : [{ id: 0, url: model.image || "/placeholder-phone.png", type: "IMAGE" as const }];
 
   const storeLogos: Record<string, string> = {
     Amazon: "/images/logo/amazon-seeklogo.png",
@@ -116,68 +110,59 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
   const sortedAffiliates =
     model.affiliates?.length
       ? [...model.affiliates].sort((a, b) => {
-          const priceA = Number(a.price?.replace(/[^0-9]/g, "")) || 0;
-          const priceB = Number(b.price?.replace(/[^0-9]/g, "")) || 0;
-          return priceA - priceB;
+          const pa = Number(a.price?.replace(/[^0-9]/g, "")) || 0;
+          const pb = Number(b.price?.replace(/[^0-9]/g, "")) || 0;
+          return pa - pb;
         })
       : [];
 
   const bestDeal = sortedAffiliates[0];
   const specs = (model.specs as any)?.specs || model.specs;
 
-  /* ================= CLEAN SPECS ================= */
-
   const cleanSpecText = (text: string): string[] => {
     if (!text) return [text];
-
     const lower = text.toLowerCase();
-    const output: string[] = [];
+    const out: string[] = [];
 
     const mp = text.match(/\d+\s?mp/i);
-    if (mp) output.push(`${mp[0]} high-resolution sensor`);
-    if (lower.includes("ois")) output.push("Optical image stabilization (OIS)");
-    if (lower.includes("pdaf")) output.push("Fast auto-focus (PDAF)");
-    if (lower.includes("ultrawide")) output.push("Ultra-wide lens");
-    if (lower.includes("telephoto")) output.push("Telephoto zoom lens");
+    if (mp) out.push(`${mp[0]} sensor`);
+    if (lower.includes("ois")) out.push("Optical image stabilization");
+    if (lower.includes("pdaf")) out.push("Fast auto-focus");
+    if (lower.includes("ultrawide")) out.push("Ultra-wide lens");
+    if (lower.includes("telephoto")) out.push("Telephoto zoom");
 
     const hz = text.match(/\d+\s?hz/i);
-    if (hz) output.push(`${hz[0]} smooth refresh rate`);
+    if (hz) out.push(`${hz[0]} refresh rate`);
 
     const mah = text.match(/\d+\s?mah/i);
-    if (mah) output.push(`${mah[0]} battery capacity`);
+    if (mah) out.push(`${mah[0]} battery`);
 
-    return output.length ? output : [text];
+    return out.length ? out : [text];
   };
-
-  /* ================= UI ================= */
 
   return (
     <div className="max-w-6xl px-4 py-10 mx-auto">
-      {/* BACK */}
       <div className="mb-6">
         <Link
           href="/phones"
-          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
         >
           <ChevronLeft size={16} className="mr-1" />
           Back to Phones
         </Link>
       </div>
 
-      {/* MAIN */}
       <div className="flex flex-col gap-10 md:flex-row">
         <div className="flex-1">
           <ImageSlider media={mediaList} modelName={model.name} />
         </div>
 
-        {/* RIGHT PANEL */}
         <div className="flex-1 space-y-4 md:sticky md:top-24">
-          <h1 className="text-3xl font-bold">{model.name}</h1>
-          <p className="text-sm text-gray-500">Brand: {model.brand.name}</p>
+          <h1 className="text-3xl font-bold dark:text-white">{model.name}</h1>
 
           {bestDeal && (
-            <div className="flex items-center gap-2 px-4 py-2 border bg-gray-50 rounded-xl">
-              <span className="text-xl font-semibold text-green-600">
+            <div className="flex items-center gap-2 px-4 py-2 border rounded-xl bg-gray-50 dark:bg-zinc-900 dark:border-zinc-700">
+              <span className="text-xl font-semibold text-green-600 dark:text-green-400">
                 {bestDeal.price}
               </span>
               <span className="px-2 py-1 text-xs text-white bg-green-500 rounded-md">
@@ -186,33 +171,28 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
             </div>
           )}
 
-          {/* Variants */}
-          <div className="p-4 bg-white border rounded-2xl">
-            <h3 className="mb-3 text-sm font-semibold">Variants</h3>
+          <div className="p-4 bg-white border rounded-2xl dark:bg-zinc-900 dark:border-zinc-700">
+            <h3 className="mb-3 text-sm font-semibold dark:text-white">Variants</h3>
             <div className="flex flex-wrap gap-2">
-              {variants.map((v) => (
-                <button
-                  key={v}
-                  className="px-3 py-1.5 text-xs border rounded-lg hover:border-black"
-                >
+              {DEFAULT_VARIANTS.map((v) => (
+                <button key={v} className="px-3 py-1.5 text-xs border rounded-lg dark:border-zinc-600 dark:text-gray-200">
                   {v}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Colors */}
-          <div className="p-4 bg-white border rounded-2xl">
-            <h3 className="mb-3 text-sm font-semibold">Colors</h3>
-            <div className="flex gap-2 pb-1 overflow-x-auto">
-              {colors.map((c) => (
+          <div className="p-4 bg-white border rounded-2xl dark:bg-zinc-900 dark:border-zinc-700">
+            <h3 className="mb-3 text-sm font-semibold dark:text-white">Colors</h3>
+            <div className="flex gap-2 overflow-x-auto">
+              {DEFAULT_COLORS.map((c) => (
                 <button
                   key={c}
                   onClick={() => setSelectedColor(c)}
-                  className={`whitespace-nowrap flex-shrink-0 px-3 py-1.5 text-xs rounded-lg border ${
+                  className={`px-3 py-1.5 text-xs rounded-lg border whitespace-nowrap ${
                     selectedColor === c
-                      ? "border-black bg-gray-50"
-                      : "border-gray-200 hover:border-gray-400"
+                      ? "border-black bg-gray-50 dark:border-white dark:bg-zinc-800"
+                      : "border-gray-200 dark:border-zinc-600 dark:text-gray-300"
                   }`}
                 >
                   {c}
@@ -221,67 +201,63 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
             </div>
           </div>
 
-          {/* BUY ONLINE */}
           {sortedAffiliates.length > 0 && (
-            <div className="p-4 border border-green-200 bg-green-50 rounded-2xl">
-              <h3 className="mb-3 text-sm font-semibold">Buy Online</h3>
+            <div className="p-4 border rounded-2xl bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800">
+              <h3 className="mb-3 text-sm font-semibold dark:text-white">Buy Online</h3>
 
-              <div className="space-y-3">
-                {sortedAffiliates.map((a) => (
-                  <motion.a
-                    key={a.id}
-                    href={a.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.01 }}
-                    className="flex items-center justify-between p-3 bg-white border border-green-200 rounded-xl"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Image
-                        src={storeLogos[a.name] || a.logo || getFavicon(a.url)}
-                        alt={a.name}
-                        width={30}
-                        height={30}
-                      />
-                      <div>
-                        <p className="text-sm font-medium">{a.name}</p>
-                        <p className="text-xs text-gray-500">Trusted seller</p>
-                      </div>
-                    </div>
+              {sortedAffiliates.map((a) => (
+                <motion.a
+                  key={a.id}
+                  href={a.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.01 }}
+                  className="flex items-center justify-between p-3 mb-2 bg-white border rounded-xl dark:bg-zinc-900 dark:border-zinc-700"
+                >
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src={storeLogos[a.name] || a.logo || getFavicon(a.url)}
+                      alt={a.name}
+                      width={30}
+                      height={30}
+                    />
+                    <p className="text-sm font-medium dark:text-white">{a.name}</p>
+                  </div>
 
-                    <span className="text-lg font-bold text-green-600">
-                      {a.price}
-                    </span>
-                  </motion.a>
-                ))}
-              </div>
+                  <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                    {a.price}
+                  </span>
+                </motion.a>
+              ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* SPECIFICATIONS */}
-      <section className="mt-14">
-        <h2 className="mb-6 text-xl font-semibold">Specifications</h2>
+      {/* ===== SPECIFICATIONS RESTORED ===== */}
+      {specs?.sections?.length > 0 && (
+        <section className="mt-14">
+          <h2 className="mb-6 text-xl font-semibold dark:text-white">Specifications</h2>
 
-        {specs?.sections?.length ? (
-          specs.sections.map((section: any) => (
+          {specs.sections.map((section: any) => (
             <div key={section.title} className="mb-10">
-              <h3 className="mb-3 text-lg font-semibold">{section.title}</h3>
+              <h3 className="mb-3 text-lg font-semibold dark:text-white">{section.title}</h3>
 
-              <div className="overflow-hidden border rounded-xl">
+              <div className="overflow-hidden border rounded-xl dark:border-zinc-700">
                 {section.rows.map((row: any) => (
                   <div
                     key={row.label}
-                    className="grid grid-cols-[140px_1fr] gap-4 px-4 py-3 border-b last:border-b-0"
+                    className="grid grid-cols-[140px_1fr] gap-4 px-4 py-3 border-b last:border-b-0 dark:border-zinc-700"
                   >
-                    <div className="text-sm text-gray-500">{row.label}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {row.label}
+                    </div>
 
-                    <div className="space-y-1 text-sm text-gray-800">
+                    <div className="space-y-1 text-sm text-gray-800 dark:text-gray-200">
                       {row.values?.map((v: any, i: number) =>
                         cleanSpecText(v.text).map((line, j) => (
                           <p key={`${i}-${j}`} className="flex gap-2">
-                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gray-400" />
+                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
                             <span>{line}</span>
                           </p>
                         ))
@@ -291,49 +267,7 @@ export default function PhoneDetailsClient({ model }: { model: Model }) {
                 ))}
               </div>
             </div>
-          ))
-        ) : (
-          <p className="text-sm text-gray-500">No specs found.</p>
-        )}
-      </section>
-
-      {/* SUGGESTIONS */}
-      {suggestions.length > 0 && (
-        <section className="mt-16">
-          <h2 className="mb-6 text-xl font-semibold">You may also like</h2>
-
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {suggestions.map((phone) => (
-              <Link
-                key={phone.id}
-                href={`/phones/${phone.slug}`}
-                className="overflow-hidden transition bg-white border rounded-2xl hover:shadow-lg"
-              >
-                <div className="relative flex items-center justify-center w-full h-52 bg-gray-50">
-                  <Image
-                    src={
-                      phone.image?.trim()
-                        ? phone.image
-                        : "/placeholder-phone.png"
-                    }
-                    alt={phone.name}
-                    fill
-                    sizes="(max-width:768px) 50vw, 25vw"
-                    className="object-contain p-4"
-                  />
-                </div>
-
-                <div className="p-3">
-                  <p className="text-sm font-semibold leading-snug line-clamp-2">
-                    {phone.name}
-                  </p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    {phone.brand.name}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          ))}
         </section>
       )}
     </div>

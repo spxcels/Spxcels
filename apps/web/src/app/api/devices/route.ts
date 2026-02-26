@@ -12,8 +12,6 @@ export async function GET() {
       },
     });
 
-    /* ================= TRENDING SCORE ================= */
-
     const scored = devices.map((d) => {
       let score = 0;
 
@@ -21,16 +19,27 @@ export async function GET() {
       score += d.media.length * 2;
       score += d.affiliates.length * 3;
 
-      // 🔥 Normalize specs into flat key/value object
+      /* ================= NORMALIZE SPECS ================= */
       const normalizedSpecs: Record<string, string> = {};
 
-      if (d.specs) {
-        Object.entries(d.specs).forEach(([key, value]) => {
-          if (value !== null && value !== undefined) {
-            normalizedSpecs[key] = String(value);
-          }
+      const sections =
+        (d.specs as any)?.specs?.sections ||
+        (d.specs as any)?.sections ||
+        [];
+
+      sections.forEach((section: any) => {
+        section.rows?.forEach((row: any) => {
+          if (!row?.label) return;
+
+          const value =
+            row.values
+              ?.map((v: any) => v?.text)
+              .filter(Boolean)
+              .join(", ") || "-";
+
+          normalizedSpecs[row.label] = value;
         });
-      }
+      });
 
       return {
         id: d.id,
@@ -38,18 +47,14 @@ export async function GET() {
         slug: d.slug,
         image: d.image ?? "/images/placeholder.jpg",
         brand: d.brand?.name ?? "Unknown",
-        specs: normalizedSpecs, // ✅ RETURN SPECS
+        specs: normalizedSpecs,
         score,
         createdAt: d.createdAt,
       };
     });
 
-    /* ================= SORT ================= */
-
     scored.sort((a, b) => {
-      if (b.score !== a.score) {
-        return b.score - a.score;
-      }
+      if (b.score !== a.score) return b.score - a.score;
 
       return (
         new Date(b.createdAt).getTime() -
