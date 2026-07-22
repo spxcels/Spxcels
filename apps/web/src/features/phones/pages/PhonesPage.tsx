@@ -20,7 +20,6 @@ interface Model {
   cardImage?: string | null;
   colors?: string[];
   variants?: string[];
-  brandId: number;
   brand: Brand;
 }
 
@@ -220,9 +219,7 @@ export default function PhonesPage({
                           {model.colors
                             .map(
                               (color) =>
-                                color
-                                  .charAt(0)
-                                  .toUpperCase() +
+                                color.charAt(0).toUpperCase() +
                                 color.slice(1),
                             )
                             .join(" | ")}
