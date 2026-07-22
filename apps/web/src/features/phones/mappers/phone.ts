@@ -34,7 +34,9 @@ export function mapPhoneSpecs(
     return null;
   }
 
-  return value as PhoneSpecs;
+  // Prisma stores this as JsonValue. We know the structure
+  // matches PhoneSpecs, so cast through unknown.
+  return value as unknown as PhoneSpecs;
 }
 
 export function mapPhoneModel(
