@@ -45,7 +45,7 @@ export async function GET() {
         id: d.id,
         name: d.name,
         slug: d.slug,
-        image: d.image ?? "/images/placeholder.jpg",
+        image: d.cardImage ?? "/images/placeholder.jpg",
         brand: d.brand?.name ?? "Unknown",
         specs: normalizedSpecs,
         score,
