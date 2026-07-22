@@ -5,21 +5,34 @@ import seedAdminConfig from "./seeds/adminConfig";
 import seedPhones from "./seeds/phones";
 
 async function main() {
-  console.log("🌱 Running all Prisma seeds...");
+  console.log("🌱 Starting Prisma seed process...\n");
 
-  // Run seeds in dependency-safe order
-  await seedAdmin(prisma);
-  await seedAdminConfig(prisma);
-  await seedPhones(prisma);
+  try {
+    // --------------------------------------------------
+    // 1️⃣ Admin user
+    // --------------------------------------------------
+    console.log("🔐 Seeding admin...");
+    await seedAdmin(prisma);
 
-  console.log("✨ All seeds executed successfully!");
+    // --------------------------------------------------
+    // 2️⃣ Admin config
+    // --------------------------------------------------
+    console.log("⚙️ Seeding admin config...");
+    await seedAdminConfig(prisma);
+
+    // --------------------------------------------------
+    // 3️⃣ Phone brands / phone base data
+    // --------------------------------------------------
+    console.log("📱 Seeding phone data...");
+    await seedPhones(prisma);
+
+    console.log("\n✅ All seeds executed successfully!");
+  } catch (error) {
+    console.error("\n❌ Seed process failed:", error);
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
-main()
-  .catch((error) => {
-    console.error("❌ Seed error:", error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main();

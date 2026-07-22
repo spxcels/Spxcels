@@ -1,25 +1,41 @@
 import api from "./axios";
 
-/* ============================================
-   GET SPECS BY MODEL ID
-============================================ */
-export const getPhoneSpecs = async (modelId: number) => {
-  const { data } = await api.get(
-    `/admin/models/${modelId}/specs`
-  );
-  return data;
-};
+export interface PhoneSpecs {
+  id: number;
 
-/* ============================================
-   UPSERT SPECS
-============================================ */
-export const savePhoneSpecs = async (
+  modelId: number;
+
+  specs: {
+    raw: string;
+  };
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SavePhoneSpecsDto {
+  phoneModelId: number;
+
+  raw: string;
+}
+
+export async function getPhoneSpecs(
   modelId: number,
-  payload: any
-) => {
-  const { data } = await api.put(
-    `/admin/models/${modelId}/specs`,
-    payload
+): Promise<PhoneSpecs> {
+  const { data } = await api.get<PhoneSpecs>(
+    `/products/phones/specifications/${modelId}`,
   );
+
   return data;
-};
+}
+
+export async function savePhoneSpecs(
+  payload: SavePhoneSpecsDto,
+): Promise<PhoneSpecs> {
+  const { data } = await api.post<PhoneSpecs>(
+    "/products/phones/specifications/upsert",
+    payload,
+  );
+
+  return data;
+}

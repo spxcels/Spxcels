@@ -1,26 +1,14 @@
-// ====================================================================
-// 📦 Prisma Schema for Spxcel
-// FINAL – JSON Specs Engine (Step 1 Foundation)
-// ====================================================================
-
-// --------------------------------------------------
-// 🧩 Prisma Client Generator
-// --------------------------------------------------
 generator client {
   provider = "prisma-client-js"
 }
 
-// --------------------------------------------------
-// 🗄️ Database Connection
-// --------------------------------------------------
 datasource db {
   provider = "postgresql"
 }
 
-// ====================================================================
-// 🔐 AUTH & ADMIN
-// ====================================================================
+// ── Auth ──────────────────────────────────────────────────────────────
 
+/// Key-value store for runtime admin configuration flags.
 model AdminConfig {
   id    Int    @id @default(autoincrement())
   key   String @unique
@@ -29,6 +17,7 @@ model AdminConfig {
   @@map("admin_config")
 }
 
+/// Admin user with email/password auth and password reset support.
 model Admin {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -43,11 +32,13 @@ model Admin {
   @@map("admins")
 }
 
+/// Short-lived token for admin password reset flows.
 model PasswordResetToken {
   id        Int      @id @default(autoincrement())
   token     String   @unique
   adminId   Int
   expiresAt DateTime
+  /// Prevents replay — token is invalidated after first use.
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -58,19 +49,21 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
-// ====================================================================
-// 📱 PHONE DATA STRUCTURE
-// ====================================================================
+// ── Catalog ───────────────────────────────────────────────────────────
 
-// ---------------------------
-// Brand
-// ---------------------------
+/// Top-level phone manufacturer (e.g. Samsung, Apple).
 model PhoneBrand {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  slug         String   @unique
+  /// GSMArena brand slug used to seed automation crawls.
+  gsmarenaSlug String?
+  /// Override the default specs scrape source for this brand.
+  specsSource  String?
+  /// Override the default media scrape source for this brand.
+  mediaSource  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   models PhoneModel[]
 
@@ -78,99 +71,127 @@ model PhoneBrand {
   @@map("phone_brands")
 }
 
-// ---------------------------
-// Phone Model
-// ---------------------------
+/// A specific phone model belonging to a brand.
 model PhoneModel {
-  id   Int    @id @default(autoincrement())
-  name String
-  slug String @unique
-
-  image String? // ⭐ CARD / LISTING IMAGE
-
-  colors   String[]
-  variants String[]
-  brandId  Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               Int              @id @default(autoincrement())
+  name             String
+  slug             String           @unique
+  brandId          Int
+  /// External ID from the scrape source (e.g. GSMArena model ID).
+  sourceModelId    String?
+  /// Canonical URL of the source page this model was scraped from.
+  sourceUrl        String?
+  /// When the automation pipeline first found this model.
+  discoveredAt     DateTime?
+  /// Tracks where this model is in the automation pipeline.
+  automationStatus AutomationStatus @default(PENDING)
+  /// Available color options for this model (display names).
+  colors           String[]
+  /// Storage/RAM variant labels (e.g. "8GB/128GB").
+  variants         String[]
+  /// Primary listing image shown on cards and search results.
+  cardImage        String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   brand      PhoneBrand      @relation(fields: [brandId], references: [id], onDelete: Cascade)
   specs      PhoneSpecs?
   media      PhoneMedia[]
   affiliates AffiliateLink[]
 
+  @@unique([brandId, name])
   @@index([slug])
-  @@index([name])
   @@index([brandId])
+  @@index([automationStatus])
   @@map("phone_models")
 }
 
-// ---------------------------
-// Specifications (⭐ JSON ENGINE)
-// ---------------------------
+/// Structured specs blob for a phone model, stored as flexible JSON.
+/// The JSON shape is defined and validated in the application layer.
 model PhoneSpecs {
-  id      Int @id @default(autoincrement())
-  modelId Int @unique
-
-  // ⭐ FLEXIBLE SPECS STRUCTURE
-  specs Json?
-
+  id        Int      @id @default(autoincrement())
+  modelId   Int      @unique
+  specs     Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   model PhoneModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
-  @@index([modelId])
   @@map("phone_specs")
 }
 
-// ---------------------------
-// Media (Slider)
-// ---------------------------
+/// A single media asset (image or video) attached to a phone model.
 model PhoneMedia {
-  id      Int @id @default(autoincrement())
-  modelId Int
-
-  url      String
-  publicId String?
-  type     MediaType
-
-  order Int?
-  alt   String?
-
-  createdAt DateTime @default(now())
+  id        Int         @id @default(autoincrement())
+  modelId   Int
+  url       String
+  /// Cloudinary public ID — present only for assets managed via Cloudinary.
+  publicId  String?
+  type      MediaType
+  source    MediaSource
+  /// Flags the hero image shown when no explicit selection is made.
+  isPrimary Boolean     @default(false)
+  /// Display order within the model's media gallery.
+  order     Int?
+  /// Accessible alt text for the asset.
+  alt       String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   model PhoneModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
+  @@unique([modelId, url])
   @@index([modelId])
+  @@index([modelId, order])
   @@map("phone_media")
 }
 
-// ---------------------------
-// Affiliate Links
-// ---------------------------
+/// Affiliate buy link for a phone model at a specific store.
+/// One row per model–store pair; price is refreshed on each sync.
 model AffiliateLink {
-  id        Int      @id @default(autoincrement())
+  id        Int            @id @default(autoincrement())
   modelId   Int
-  storeName String
+  store     AffiliateStore
   url       String
-  price     String?
-  currency  String?
-  createdAt DateTime @default(now())
+  /// Latest known price, null if unavailable or not yet fetched.
+  price     Decimal?       @db.Decimal(10, 2)
+  currency  String         @default("INR")
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   model PhoneModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
-  @@unique([modelId, storeName])
+  @@unique([modelId, store])
   @@index([modelId])
   @@map("affiliate_links")
 }
 
-// ====================================================================
-// ENUMS
-// ====================================================================
+// ── Enums ─────────────────────────────────────────────────────────────
 
+/// Distinguishes between static images and video assets.
 enum MediaType {
   IMAGE
   VIDEO
+}
+
+/// Indicates where a media asset was originally sourced from.
+enum MediaSource {
+  OFFICIAL // Brand or manufacturer press assets
+  RETAILER // Scraped from a retail product page
+  AFFILIATE // Pulled from an affiliate store listing
+  USER // Submitted by a user
+}
+
+/// Pipeline state for automated spec and media ingestion.
+enum AutomationStatus {
+  PENDING // Discovered, not yet processed
+  PROCESSING // Currently being ingested
+  COMPLETE // Successfully ingested
+  FAILED // Ingestion failed; inspect logs
+}
+
+/// Supported affiliate stores for buy links.
+enum AffiliateStore {
+  AMAZON
+  FLIPKART
 }

@@ -1,4 +1,4 @@
-import EmptyState from "@/components/EmptyState";
+import EmptyState from "@/components/ui/EmptyState";
 
 export default function LaptopsIndex() {
   return (

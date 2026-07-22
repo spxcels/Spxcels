@@ -26,7 +26,9 @@ export const auto = {
   get(table: string, id: string | number) {
     return api
       .get(
-        `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(String(id))}`
+        `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(
+          String(id)
+        )}`
       )
       .then(res => res.data);
   },
@@ -40,7 +42,9 @@ export const auto = {
   update(table: string, id: string | number, data: any) {
     return api
       .put(
-        `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(String(id))}`,
+        `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(
+          String(id)
+        )}`,
         data
       )
       .then(res => res.data);
@@ -49,8 +53,21 @@ export const auto = {
   remove(table: string, id: string | number) {
     return api
       .delete(
-        `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(String(id))}`
+        `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(
+          String(id)
+        )}`
       )
+      .then(res => res.data);
+  },
+
+  // ===============================
+  // ⭐ AUTOMATION MODEL CREATION
+  // triggers backend automation engine
+  // ===============================
+
+  createModel(data: { name: string }) {
+    return api
+      .post("/auto/data/create-model", data)
       .then(res => res.data);
   },
 

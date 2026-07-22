@@ -4,11 +4,14 @@
     "target": "ES2020",
     "module": "CommonJS",
 
+    // Node types so fs/path/url work
+    "types": ["node"],
+
     // Required to generate index.d.ts
     "declaration": true,
     "emitDeclarationOnly": false,
 
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist",
 
     "esModuleInterop": true,
@@ -16,6 +19,8 @@
     "strict": true
   },
 
-  // Only include TypeScript source
-  "include": ["src"]
+  "include": [
+    "src",
+    "prisma"
+  ]
 }

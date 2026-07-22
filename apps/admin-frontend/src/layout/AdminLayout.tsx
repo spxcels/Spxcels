@@ -1,28 +1,31 @@
 import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
+import Navbar from "./Topbar";
 import { Outlet } from "react-router-dom";
 
 export default function AdminLayout() {
   return (
-    <div className="flex h-screen overflow-hidden text-gray-900 bg-gray-100 dark:bg-zinc-950 dark:text-gray-100">
+    <div className="flex h-screen overflow-hidden bg-zinc-950 text-zinc-100">
+
       {/* SIDEBAR */}
       <aside className="h-full shrink-0">
         <Sidebar />
       </aside>
 
-      {/* MAIN AREA */}
-      <div className="flex flex-col flex-1 h-full min-w-0">
-        {/* NAVBAR (sticky, no scroll) */}
-        <div className="shrink-0">
+      {/* MAIN */}
+      <div className="flex flex-col flex-1 min-w-0">
+
+        {/* TOPBAR */}
+        <div className="border-b shrink-0 border-zinc-900 bg-zinc-950">
           <Navbar />
         </div>
 
-        {/* SCROLLABLE CONTENT */}
-        <main className="flex-1 p-4 overflow-y-auto sm:p-6 lg:p-8">
+        {/* CONTENT */}
+        <main className="flex-1 px-5 py-5 overflow-y-auto bg-zinc-950">
           <div className="mx-auto max-w-7xl">
             <Outlet />
           </div>
         </main>
+
       </div>
     </div>
   );

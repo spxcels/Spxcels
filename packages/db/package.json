@@ -1,11 +1,9 @@
 {
   "name": "@spxcel/db",
   "version": "1.0.0",
-
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
-
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -13,7 +11,6 @@
       "require": "./dist/index.js"
     }
   },
-
   "scripts": {
     "build": "tsc",
     "generate": "prisma generate",
@@ -21,25 +18,22 @@
     "studio": "prisma studio",
     "postinstall": "prisma generate"
   },
-
   "prisma": {
     "schema": "./prisma/schema.prisma",
     "seed": "tsx prisma/seed.ts"
   },
-
   "dependencies": {
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "7.1.0",
     "dotenv": "^17.2.3",
     "pg": "^8.16.3"
   },
-
   "devDependencies": {
-    "@types/dotenv": "^8.2.3",
     "@types/node": "^24.10.1",
+    "@types/pg": "^8.15.6",
     "prisma": "7.1.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.9.3"
   }
 }

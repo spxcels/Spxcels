@@ -13,8 +13,11 @@
     "lib": ["ES2020"],
 
     "baseUrl": ".",
+
     "paths": {
       "@/*": ["apps/admin-frontend/src/*"],
+
+      "@backend/*": ["apps/admin-backend/src/*"],
 
       "@spxcel/ui": ["packages/ui/src"],
       "@spxcel/ui/*": ["packages/ui/src/*"],
