@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Menu,
@@ -8,14 +9,17 @@ import {
   Smartphone,
   Laptop,
   PcCase,
-  Database,
+  Settings,
 } from "lucide-react";
-import { useState } from "react";
 
 export default function Sidebar() {
   const location = useLocation();
+
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
+  const [hovered, setHovered] = useState(false);
+
+  const expanded = !collapsed || hovered;
 
   const isActive = (path: string) =>
     location.pathname === path ||
@@ -23,140 +27,111 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* MOBILE TOP BAR */}
-      <div className="flex items-center justify-between p-4 bg-white border-b md:hidden dark:bg-zinc-900 dark:border-zinc-800">
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Spex Admin
+      {/* MOBILE HEADER */}
+      <div className="flex items-center justify-between p-4 border-b md:hidden border-zinc-800 bg-zinc-950">
+        <h1 className="text-lg font-bold tracking-wide text-white">
+          SPXCEL
         </h1>
 
         <button
           onClick={() => setOpen(true)}
-          className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-800"
+          className="p-2 rounded-lg hover:bg-zinc-800"
         >
           <Menu size={22} />
         </button>
       </div>
 
-      {/* BACKDROP */}
+      {/* MOBILE BACKDROP */}
       {open && (
         <div
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
         />
       )}
 
       {/* SIDEBAR */}
       <aside
+        onMouseEnter={() => {
+          if (collapsed) setHovered(true);
+        }}
+        onMouseLeave={() => {
+          if (collapsed) setHovered(false);
+        }}
         className={`
           fixed md:sticky top-0 left-0 z-50
-          h-screen flex flex-col
+          flex flex-col h-screen
+          border-r border-zinc-800
+          bg-zinc-950
           transition-all duration-300
-          border-r bg-white border-gray-200
-          dark:bg-zinc-900 dark:border-zinc-800
-          ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-          ${collapsed ? "md:w-20" : "md:w-64"}
+
+          ${
+            open
+              ? "translate-x-0"
+              : "-translate-x-full md:translate-x-0"
+          }
+
+          ${expanded ? "md:w-64" : "md:w-20"}
           w-64
         `}
       >
-        <div className="p-4 overflow-y-auto">
-          {/* HEADER */}
-          <div className="flex items-center justify-between mb-6">
-            {!collapsed && (
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                Spxcel
+        {/* HEADER */}
+        <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+          {expanded ? (
+            <div>
+              <h1 className="text-lg font-bold tracking-wide text-white">
+                SPXCEL
               </h1>
-            )}
 
+              <p className="text-xs text-zinc-500">
+                Admin Panel
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center w-full">
+              <span className="text-lg font-bold text-violet-400">
+                S
+              </span>
+            </div>
+          )}
+
+          {expanded && (
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="hidden p-2 rounded-md md:flex hover:bg-gray-100 dark:hover:bg-zinc-800"
+              className="items-center justify-center hidden w-8 h-8 text-white transition-all duration-200 rounded-lg shadow-lg  md:flex bg-violet-600 shadow-violet-950/40 hover:bg-violet-500"
             >
-              {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+              {collapsed ? (
+                <ChevronRight size={18} />
+              ) : (
+                <ChevronLeft size={18} />
+              )}
             </button>
+          )}
 
-            <button
-              onClick={() => setOpen(false)}
-              className="p-2 rounded-md md:hidden hover:bg-gray-100 dark:hover:bg-zinc-800"
-            >
-              <X size={22} />
-            </button>
-          </div>
+          <button
+            onClick={() => setOpen(false)}
+            className="p-2 rounded-lg md:hidden hover:bg-zinc-800"
+          >
+            <X size={20} />
+          </button>
+        </div>
 
-          {/* DASHBOARD */}
+        {/* NAVIGATION */}
+        <nav className="flex flex-col flex-1 p-3">
           <NavItem
             to="/admin/dashboard"
             label="Dashboard"
             icon={<LayoutDashboard size={18} />}
             active={isActive("/admin/dashboard")}
-            collapsed={collapsed}
+            collapsed={!expanded}
             onClick={() => setOpen(false)}
           />
-
-          {/* TABLES */}
-          {!collapsed && (
-            <p className="mt-6 mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-              Tables
-            </p>
-          )}
-
-          <NavItem
-            to="/admin/tables/phone-models"
-            label="Phone Models"
-            icon={<Database size={18} />}
-            active={isActive("/admin/tables/phone-models")}
-            collapsed={collapsed}
-            onClick={() => setOpen(false)}
-          />
-
-          <NavItem
-            to="/admin/tables/phone-media"
-            label="Phone Media"
-            icon={<Database size={18} />}
-            active={isActive("/admin/tables/phone-media")}
-            collapsed={collapsed}
-            onClick={() => setOpen(false)}
-          />
-
-          <NavItem
-            to="/admin/tables/brands"
-            label="Brands"
-            icon={<Database size={18} />}
-            active={isActive("/admin/tables/brands")}
-            collapsed={collapsed}
-            onClick={() => setOpen(false)}
-          />
-
-          <NavItem
-            to="/admin/tables/specs"
-            label="Specs"
-            icon={<Database size={18} />}
-            active={isActive("/admin/tables/specs")}
-            collapsed={collapsed}
-            onClick={() => setOpen(false)}
-          />
-
-          <NavItem
-            to="/admin/tables/affiliate-links"
-            label="Affiliate Links"
-            icon={<Database size={18} />}
-            active={isActive("/admin/tables/affiliate-links")}
-            collapsed={collapsed}
-            onClick={() => setOpen(false)}
-          />
-
-          {/* PRODUCTS */}
-          {!collapsed && (
-            <p className="mt-6 mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-              Products
-            </p>
-          )}
 
           <NavItem
             to="/admin/products/phones"
             label="Phones"
             icon={<Smartphone size={18} />}
             active={isActive("/admin/products/phones")}
-            collapsed={collapsed}
+            collapsed={!expanded}
             onClick={() => setOpen(false)}
           />
 
@@ -165,27 +140,34 @@ export default function Sidebar() {
             label="Laptops"
             icon={<Laptop size={18} />}
             active={isActive("/admin/products/laptops")}
-            collapsed={collapsed}
+            collapsed={!expanded}
             onClick={() => setOpen(false)}
           />
 
           <NavItem
             to="/admin/products/pcs"
-            label="PCs"
+            label="PC Parts"
             icon={<PcCase size={18} />}
             active={isActive("/admin/products/pcs")}
-            collapsed={collapsed}
+            collapsed={!expanded}
             onClick={() => setOpen(false)}
           />
-        </div>
+
+          <div className="pt-4 mt-auto border-t border-zinc-800">
+            <NavItem
+              to="/admin/settings/account"
+              label="Settings"
+              icon={<Settings size={18} />}
+              active={isActive("/admin/settings")}
+              collapsed={!expanded}
+              onClick={() => setOpen(false)}
+            />
+          </div>
+        </nav>
       </aside>
     </>
   );
 }
-
-/* =========================
-   NAV ITEM
-========================= */
 
 function NavItem({
   to,
@@ -206,18 +188,31 @@ function NavItem({
     <Link
       to={to}
       onClick={onClick}
+      title={collapsed ? label : ""}
       className={`
-        flex items-center gap-3 px-3 py-2 rounded-md mb-1
-        transition-all duration-150
+        flex items-center gap-3
+        px-3 py-3
+        rounded-xl
+        transition-all duration-200
+
         ${
           active
-            ? "bg-gray-200 text-gray-900 font-semibold dark:bg-zinc-800 dark:text-white"
-            : "text-gray-700 hover:bg-gray-100 hover:font-semibold dark:text-gray-300 dark:hover:bg-zinc-800"
+            ? "bg-violet-600 text-white shadow-lg shadow-violet-950/30"
+            : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
         }
+
+        ${collapsed ? "justify-center" : ""}
       `}
     >
-      {icon}
-      {!collapsed && label}
+      <span className="shrink-0">
+        {icon}
+      </span>
+
+      {!collapsed && (
+        <span className="text-sm font-medium">
+          {label}
+        </span>
+      )}
     </Link>
   );
 }

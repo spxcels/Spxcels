@@ -1,0 +1,183 @@
+/* ==========================================================
+   SPEXCEL ADMIN DESIGN SYSTEM
+   ========================================================== */
+
+:root {
+  /* Colors */
+
+  --background: #09090b;
+  --card: #18181b;
+
+  --border: #27272a;
+  --border-light: #3f3f46;
+
+  --foreground: #fafafa;
+
+  --muted: #a1a1aa;
+  --muted-foreground: #71717a;
+
+  --primary: #7c3aed;
+  --primary-hover: #8b5cf6;
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  /* Radius */
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+
+  /* Animation */
+
+  --transition: 0.2s ease;
+
+  /* Shadow */
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.15);
+
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================================
+   GLOBAL
+   ========================================================== */
+
+html {
+  font-size: 14px;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+
+  font-size: 14px;
+  line-height: 1.5;
+
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================
+   TYPOGRAPHY
+   ========================================================== */
+
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+p {
+  color: var(--muted);
+}
+
+/* ==========================================================
+   BUTTONS
+   ========================================================== */
+
+button {
+  transition: var(--transition);
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+/* ==========================================================
+   FORM ELEMENTS
+   ========================================================== */
+
+input,
+textarea,
+select {
+  font-size: 14px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted-foreground);
+}
+
+/* ==========================================================
+   LINKS
+   ========================================================== */
+
+a {
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+/* ==========================================================
+   SCROLLBAR
+   ========================================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* ==========================================================
+   TEXT SELECTION
+   ========================================================== */
+
+::selection {
+  background: rgba(124, 58, 237, 0.25);
+  color: white;
+}
+
+/* ==========================================================
+   DISABLED
+   ========================================================== */
+
+:disabled {
+  cursor: not-allowed;
+}
+
+/* ==========================================================
+   UTILITIES
+   ========================================================== */
+
+.compact {
+  gap: 12px;
+}
+
+.card-shadow {
+  box-shadow: var(--shadow-sm);
+}
+
+.card-shadow-lg {
+  box-shadow: var(--shadow);
+}
+
+.transition-default {
+  transition: var(--transition);
+}

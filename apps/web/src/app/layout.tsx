@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Noto_Sans_JP } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/header";
+import Header from "@/components/layouts/header/Header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,14 +11,6 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-});
-
-/* 🟢 Global Noto JP font */
-const notoJP = Noto_Sans_JP({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-noto",
-  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -37,7 +29,6 @@ export default function RootLayout({
         className={`
           ${geistSans.variable}
           ${geistMono.variable}
-          ${notoJP.variable}
           antialiased
           bg-white
           dark:bg-slate-900

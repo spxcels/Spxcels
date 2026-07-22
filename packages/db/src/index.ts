@@ -5,14 +5,15 @@ import pkg from "pg";
 const { Pool } = pkg;
 
 /* ===============================
-   PostgreSQL Pool (Neon)
+   PostgreSQL Pool
 =============================== */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: 10,
 });
 
 /* ===============================
-   Prisma Adapter (Prisma v7)
+   Prisma Adapter
 =============================== */
 const adapter = new PrismaPg(pool);
 
@@ -29,8 +30,11 @@ const globalForPrisma = globalThis as unknown as {
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: ["warn", "error"],
     adapter,
+    log:
+      process.env.NODE_ENV === "development"
+        ? ["query", "warn", "error"]
+        : ["warn", "error"],
   });
 
 if (process.env.NODE_ENV !== "production") {

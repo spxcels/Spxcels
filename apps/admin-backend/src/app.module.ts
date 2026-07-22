@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
@@ -7,47 +8,72 @@ import { AppService } from "./app.service";
 // 🔐 Authentication
 import { AuthModule } from "./auth/auth.module";
 
+// ☁️ Cloudinary
+import { CloudinaryModule } from "./cloudinary/cloudinary.module";
+
 // ⚙️ Prisma ORM
 import { PrismaModule } from "./prisma/prisma.module";
 
 // ⚙️ Admin Config
 import { AdminConfigModule } from "./admin-config/admin-config.module";
 
-// 🛠 Auto Admin System
-import { AutoModule } from "./auto/auto.module";
-
-// 🧠 Admin (phones, media, etc.)
+// 🧠 Admin
 import { AdminModule } from "./admin/admin.module";
+
+// 🔍 Search
+import { SearchModule } from "./search/search.module";
+
+// 🤖 Auto Admin System
+import { AutoModule } from "./products/phones/auto/auto.module";
+
+// 📱 Phone Domain
+import { BrandsModule } from "./products/phones/brands/brands.module";
+import { CardImageModule } from "./products/phones/media/card-image/card-image.module";
+import { ModelsModule } from "./products/phones/models/models.module";
+import { OrganizerModule } from "./products/phones/organizer/organizer.module";
+import { SpecificationsModule } from "./products/phones/specifications/specifications.module";
 
 @Module({
   imports: [
-    /**
-     * ✅ LOAD ENV VARIABLES FIRST
-     * - Automatically loads .env from process cwd
-     * - Required for Cloudinary, JWT, DB, etc.
-     */
+    // 🌍 Environment
     ConfigModule.forRoot({
       isGlobal: true,
     }),
 
-    /**
-     * ⚙️ Core modules
-     */
+    // ⏰ Scheduler
+    ScheduleModule.forRoot(),
+
+    // ⚙️ Core
     PrismaModule,
     AuthModule,
+    CloudinaryModule,
 
-    /**
-     * 🛠 Admin tools
-     */
+    // ⚙️ Admin Configuration
     AdminConfigModule,
+
+    // 🤖 Automation
     AutoModule,
 
-    /**
-     * 🧠 Domain Admin (phones, models, media)
-     */
+    // 📱 Phone Domain
+    BrandsModule,
+    ModelsModule,
+    SpecificationsModule,
+    CardImageModule,
+    OrganizerModule,
+
+    // 🔍 Search
+    SearchModule,
+
+    // 🧠 Admin
     AdminModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+
+  controllers: [
+    AppController,
+  ],
+
+  providers: [
+    AppService,
+  ],
 })
 export class AppModule {}

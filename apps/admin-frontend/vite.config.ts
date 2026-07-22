@@ -2,11 +2,10 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
 
-  // ⭐ IMPORTANT: tell Vite your .env is inside THIS folder
+  // Load .env from this app folder
   envDir: "./",
 
   resolve: {
@@ -14,5 +13,17 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "@spxcel/ui": path.resolve(__dirname, "../../packages/ui/src"),
     },
+  },
+
+  server: {
+    fs: {
+      // allow access to monorepo packages
+      allow: [".."],
+    },
+  },
+
+  optimizeDeps: {
+    // forces Vite to rebuild optimized deps if cache is stale
+    force: true,
   },
 });

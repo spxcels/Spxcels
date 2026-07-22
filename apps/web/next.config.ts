@@ -10,13 +10,10 @@ const nextConfig: NextConfig = {
     ADMIN_SECRET: process.env.ADMIN_SECRET,
   },
 
-  // Prisma stays external
+  // Prisma external (correct)
   serverExternalPackages: ["@prisma/client", "prisma"],
 
-  // Monorepo DB package
-  transpilePackages: ["@spxcel/db"],
-
-  // Next.js 16 monorepo tracing
+  // Next.js monorepo tracing
   outputFileTracingRoot: join(__dirname, "../../"),
 
   turbopack: {

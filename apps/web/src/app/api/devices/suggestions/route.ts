@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import db from "@spxcel/db";
 import Fuse from "fuse.js";
 
-export async function GET(req: Request) {
+export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(req.url);
+    const url = new URL(request.url);
+    const searchParams = url.searchParams;
 
     // ------------------------------------------------
     // Query params
@@ -13,15 +14,37 @@ export async function GET(req: Request) {
     const currentId = Number(searchParams.get("id") ?? 0);
 
     // ------------------------------------------------
-    // 1️⃣ Fetch phones (SAFE with your schema)
+    // Fetch phones (DB filtering first)
     // ------------------------------------------------
     const phones = await db.phoneModel.findMany({
-      take: 200,
+      where: query
+        ? {
+            OR: [
+              {
+                name: {
+                  contains: query,
+                  mode: "insensitive",
+                },
+              },
+              {
+                brand: {
+                  name: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+              },
+            ],
+          }
+        : undefined,
+
+      take: 20,
+
       select: {
         id: true,
         name: true,
         slug: true,
-        image: true,
+        cardImage: true,
         brand: {
           select: {
             name: true,
@@ -35,12 +58,12 @@ export async function GET(req: Request) {
     }
 
     // ------------------------------------------------
-    // 2️⃣ Find current phone (for smart boosting)
+    // Find current phone
     // ------------------------------------------------
     const currentPhone = phones.find((p) => p.id === currentId);
 
     // ------------------------------------------------
-    // 3️⃣ Fuse smart fuzzy search
+    // Fuse search
     // ------------------------------------------------
     const fuse = new Fuse(phones, {
       keys: [
@@ -63,25 +86,19 @@ export async function GET(req: Request) {
         }));
 
     // ------------------------------------------------
-    // 4️⃣ Smart ranking (AI-feeling but SAFE)
+    // Smart ranking
     // ------------------------------------------------
     results = results
       .filter((p) => p.id !== currentId)
       .map((phone) => {
         let rank = 0;
 
-        // Fuse relevance (lower score = better)
         rank += (1 - phone._score) * 50;
 
-        // Same brand boost (feels intelligent)
-        if (
-          currentPhone &&
-          phone.brand.name === currentPhone.brand.name
-        ) {
+        if (currentPhone && phone.brand.name === currentPhone.brand.name) {
           rank += 20;
         }
 
-        // Slight boost for shorter names (usually cleaner models)
         rank += Math.max(0, 20 - phone.name.length);
 
         return {
@@ -92,7 +109,7 @@ export async function GET(req: Request) {
       .sort((a, b) => b._rank - a._rank);
 
     // ------------------------------------------------
-    // 5️⃣ Return suggestions
+    // Return suggestions
     // ------------------------------------------------
     return NextResponse.json(results.slice(0, 6));
   } catch (error) {
