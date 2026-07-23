@@ -5,7 +5,7 @@ export default function PCsIndex() {
     <EmptyState
       title="PCs"
       description="No PCs configured yet."
-      actionLabel="Create PC"
+      buttonText="Create PC"
       onAction={() => alert("PC builder coming soon")}
     />
   );

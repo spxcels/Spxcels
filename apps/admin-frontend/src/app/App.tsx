@@ -1,9 +1,4 @@
-import {
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 
 /* ============================================
@@ -50,27 +45,13 @@ import PCsPage from "@/pages/products/pc-parts";
 
 import BrandsPage from "@/pages/products/phones/brands";
 import ModelsPage from "@/pages/products/phones/models";
-
 import CreatePhoneWizardPage from "@/pages/products/phones/create";
-
 import PhoneEditorPage from "@/pages/products/phones/editor";
 import BasicInfoPage from "@/pages/products/phones/basic-info";
-import OrganizerPage from "@/pages/products/phones/organizer";
 import SpecOrganizerPage from "@/pages/products/phones/spec-organizer";
 import PhoneCardImagePage from "@/pages/products/phones/card-image";
-
 import PhoneMedia from "@/pages/products/phones/media/PhoneMedia";
 import AffiliateManager from "@/pages/products/phones/affiliates/AffiliateManager";
-
-/* ============================================
-   DEVELOPER TABLES
-============================================ */
-
-import PhoneModelsTable from "@/pages/developer/tables/phone-models";
-import PhoneMediaTable from "@/pages/developer/tables/phone-media";
-import BrandsTable from "@/pages/developer/tables/brands";
-import SpecsTable from "@/pages/developer/tables/specs";
-import AffiliateLinksTable from "@/pages/developer/tables/affiliate-links";
 
 /* ============================================
    SETTINGS
@@ -87,35 +68,20 @@ import DatabaseSettings from "@/pages/settings/DatabaseSettings";
 export default function App() {
   return (
     <AuthProvider>
-      <Toaster
-        position="top-right"
-        richColors
-      />
+      <Toaster position="top-right" richColors />
 
       <Routes>
         {/* ROOT */}
 
         <Route
           path="/"
-          element={
-            <Navigate
-              to="/admin/dashboard"
-              replace
-            />
-          }
+          element={<Navigate to="/admin/dashboard" replace />}
         />
 
         {/* AUTH */}
 
-        <Route
-          path="/login"
-          element={<LoginPage />}
-        />
-
-        <Route
-          path="/forgot-password"
-          element={<ForgotPassword />}
-        />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* ADMIN */}
 
@@ -129,10 +95,7 @@ export default function App() {
         >
           {/* DASHBOARD */}
 
-          <Route
-            path="dashboard"
-            element={<Dashboard />}
-          />
+          <Route path="dashboard" element={<Dashboard />} />
 
           {/* ============================================
               PHONE MODULE
@@ -148,14 +111,10 @@ export default function App() {
             element={<ModelsPage />}
           />
 
-          {/* NEW MODEL WIZARD */}
-
           <Route
             path="products/phones/create"
             element={<CreatePhoneWizardPage />}
           />
-
-          {/* PHONE WORKSPACE */}
 
           <Route
             path="products/phones/editor/:modelId"
@@ -165,11 +124,6 @@ export default function App() {
           <Route
             path="products/phones/basic-info/:modelId"
             element={<BasicInfoPage />}
-          />
-
-          <Route
-            path="products/phones/organizer/:modelId"
-            element={<OrganizerPage />}
           />
 
           <Route
@@ -207,35 +161,6 @@ export default function App() {
           />
 
           {/* ============================================
-              DEVELOPER TABLES
-          ============================================ */}
-
-          <Route
-            path="tables/phone-models"
-            element={<PhoneModelsTable />}
-          />
-
-          <Route
-            path="tables/phone-media"
-            element={<PhoneMediaTable />}
-          />
-
-          <Route
-            path="tables/brands"
-            element={<BrandsTable />}
-          />
-
-          <Route
-            path="tables/specs"
-            element={<SpecsTable />}
-          />
-
-          <Route
-            path="tables/affiliate-links"
-            element={<AffiliateLinksTable />}
-          />
-
-          {/* ============================================
               SETTINGS
           ============================================ */}
 
@@ -259,12 +184,7 @@ export default function App() {
 
         <Route
           path="*"
-          element={
-            <Navigate
-              to="/admin/dashboard"
-              replace
-            />
-          }
+          element={<Navigate to="/admin/dashboard" replace />}
         />
       </Routes>
     </AuthProvider>

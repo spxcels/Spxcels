@@ -4,24 +4,19 @@ import { previewSpecifications } from "@/api/organizer";
 
 import type {
   OrganizerResult,
-} from "@/pages/products/phones/organizer/types";
+} from "@/pages/products/phones/spec-organizer/types";
 
-export function useOrganizer(
-  raw: string,
-) {
+export function useOrganizer(raw: string) {
   const [result, setResult] =
-    useState<OrganizerResult | null>(
-      null,
-    );
+    useState<OrganizerResult | null>(null);
 
   const [isOrganizing, setIsOrganizing] =
     useState(false);
 
-  const canOrganize =
-    useMemo(
-      () => raw.trim().length > 0,
-      [raw],
-    );
+  const canOrganize = useMemo(
+    () => raw.trim().length > 0,
+    [raw],
+  );
 
   async function organize() {
     if (!canOrganize) {
@@ -31,11 +26,7 @@ export function useOrganizer(
     setIsOrganizing(true);
 
     try {
-      const parsed =
-        await previewSpecifications(
-          raw,
-        );
-
+      const parsed = await previewSpecifications(raw);
       setResult(parsed);
     } finally {
       setIsOrganizing(false);
@@ -48,13 +39,9 @@ export function useOrganizer(
 
   return {
     result,
-
     isOrganizing,
-
     canOrganize,
-
     organize,
-
     reset,
   };
 }

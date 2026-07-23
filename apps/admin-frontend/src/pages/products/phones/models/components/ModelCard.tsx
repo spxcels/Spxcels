@@ -1,30 +1,20 @@
 import {
   ArrowRight,
   CheckCircle2,
-  ImageOff,
   Smartphone,
   Trash2,
 } from "lucide-react";
 
 type ModelCardProps = {
   id: number;
-
   image?: string | null;
-
   name: string;
-
   brand: string;
-
   variants: string[];
-
   colors: string[];
-
   hasSpecifications: boolean;
-
   hasCardImage: boolean;
-
   onOpen: () => void;
-
   onDelete: (id: number) => void;
 };
 
@@ -41,9 +31,7 @@ function StatusPill({
     <div
       className={[
         "flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-zinc-950",
-        active
-          ? "text-white"
-          : "text-zinc-500",
+        active ? "text-white" : "text-zinc-500",
       ].join(" ")}
     >
       <CheckCircle2
@@ -73,15 +61,11 @@ export default function ModelCard({
   onDelete,
 }: ModelCardProps) {
   return (
-    <div
-      className="flex flex-col p-6 transition-all duration-300 border group rounded-2xl border-zinc-800 bg-zinc-900 hover:border-violet-500 hover:bg-zinc-900/80 hover:shadow-xl hover:shadow-violet-950/20"
-    >
+    <div className="flex flex-col p-6 transition-all duration-300 border rounded-2xl border-zinc-800 bg-zinc-900 group hover:border-violet-500 hover:bg-zinc-900/80 hover:shadow-xl hover:shadow-violet-950/20">
       {/* HEADER */}
 
       <div className="flex items-start justify-between">
-
         <div className="flex items-center gap-3">
-
           {image ? (
             <img
               src={image}
@@ -95,7 +79,6 @@ export default function ModelCard({
           )}
 
           <div>
-
             <h2 className="text-lg font-semibold text-white">
               {name}
             </h2>
@@ -103,17 +86,13 @@ export default function ModelCard({
             <p className="text-sm text-zinc-500">
               {brand}
             </p>
-
           </div>
-
         </div>
 
         <button
           onClick={() => {
             if (
-              window.confirm(
-                `Delete "${name}"?`,
-              )
+              window.confirm(`Delete "${name}"?`)
             ) {
               onDelete(id);
             }
@@ -122,7 +101,6 @@ export default function ModelCard({
         >
           <Trash2 size={16} />
         </button>
-
       </div>
 
       {/* DIVIDER */}
@@ -132,7 +110,6 @@ export default function ModelCard({
       {/* STATUS */}
 
       <div className="flex flex-wrap gap-3">
-
         <StatusPill
           active={hasSpecifications}
           label="Specifications"
@@ -142,7 +119,6 @@ export default function ModelCard({
           active={hasCardImage}
           label="Card Image"
         />
-
       </div>
 
       {/* DIVIDER */}
@@ -152,13 +128,11 @@ export default function ModelCard({
       {/* VARIANTS */}
 
       <div>
-
         <p className="mb-2 text-sm font-semibold text-zinc-400">
           Variants
         </p>
 
         <div className="flex flex-wrap gap-2">
-
           {variants.length > 0 ? (
             variants
               .slice(0, 3)
@@ -175,21 +149,17 @@ export default function ModelCard({
               No variants available.
             </p>
           )}
-
         </div>
-
       </div>
 
       {/* COLORS */}
 
       <div className="mt-5">
-
         <p className="mb-2 text-sm font-semibold text-zinc-400">
           Colors
         </p>
 
         <div className="flex flex-wrap gap-2">
-
           {colors.length > 0 ? (
             colors
               .slice(0, 3)
@@ -206,9 +176,7 @@ export default function ModelCard({
               No colors available.
             </p>
           )}
-
         </div>
-
       </div>
 
       {/* FOOTER */}
@@ -223,9 +191,7 @@ export default function ModelCard({
           size={18}
           className="transition-transform duration-300 group-hover:translate-x-1"
         />
-
       </button>
-
     </div>
   );
 }

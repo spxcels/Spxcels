@@ -5,7 +5,7 @@ export default function LaptopsIndex() {
     <EmptyState
       title="Laptops"
       description="No laptops added yet."
-      actionLabel="Add Laptop"
+      buttonText="Add Laptop"
       onAction={() => alert("Laptop workflow coming soon")}
     />
   );
