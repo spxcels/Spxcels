@@ -1,4 +1,4 @@
-import { prisma } from "@spxcel/db";
+import { prisma } from "../src";
 
 import seedAdmin from "./seeds/admin";
 import seedAdminConfig from "./seeds/adminConfig";
