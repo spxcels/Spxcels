@@ -20,12 +20,6 @@ import { AdminConfigModule } from "./admin-config/admin-config.module";
 // 🧠 Admin
 import { AdminModule } from "./admin/admin.module";
 
-// 🔍 Search
-import { SearchModule } from "./search/search.module";
-
-// 🤖 Auto Admin System
-import { AutoModule } from "./products/phones/auto/auto.module";
-
 // 📱 Phone Domain
 import { BrandsModule } from "./products/phones/brands/brands.module";
 import { CardImageModule } from "./products/phones/media/card-image/card-image.module";
@@ -51,18 +45,12 @@ import { SpecificationsModule } from "./products/phones/specifications/specifica
     // ⚙️ Admin Configuration
     AdminConfigModule,
 
-    // 🤖 Automation
-    AutoModule,
-
     // 📱 Phone Domain
     BrandsModule,
     ModelsModule,
     SpecificationsModule,
     CardImageModule,
     OrganizerModule,
-
-    // 🔍 Search
-    SearchModule,
 
     // 🧠 Admin
     AdminModule,

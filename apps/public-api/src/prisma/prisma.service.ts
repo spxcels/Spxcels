@@ -1,0 +1,35 @@
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { PrismaClient } from '@spxcel/db';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+
+@Injectable()
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
+  constructor() {
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      max: 10,
+    });
+
+    const adapter = new PrismaPg(pool);
+
+    super({
+      adapter,
+      log:
+        process.env.NODE_ENV === 'development'
+          ? ['query', 'warn', 'error']
+          : ['warn', 'error'],
+    });
+  }
+
+  async onModuleInit(): Promise<void> {
+    await this.$connect();
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.$disconnect();
+  }
+}
