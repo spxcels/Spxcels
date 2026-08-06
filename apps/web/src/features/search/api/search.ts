@@ -1,5 +1,3 @@
-import axios from "@/lib/api";
-
 import type { SearchResponse } from "../types";
 
 export interface SearchParams {
@@ -11,12 +9,21 @@ export async function search({
   query,
   limit = 8,
 }: SearchParams): Promise<SearchResponse> {
-  const { data } = await axios.get<SearchResponse>("/search", {
-    params: {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/search?q=${encodeURIComponent(
       query,
-      limit,
+    )}&limit=${limit}`,
+    {
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store",
     },
-  });
+  );
 
-  return data;
+  if (!response.ok) {
+    throw new Error("Failed to search phones.");
+  }
+
+  return response.json();
 }

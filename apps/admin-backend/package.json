@@ -31,7 +31,7 @@
     "@nestjs/websockets": "^11.1.16",
     "@prisma/client": "7.9.1",
     "@spxcel/db": "workspace:*",
-    "@types/pg": "^8.15.6",
+    "@types/pg": "^8.20.3",
     "bcrypt": "^6.0.0",
     "cheerio": "^1.2.0",
     "class-transformer": "^0.5.1",

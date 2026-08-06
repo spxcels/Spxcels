@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import PhoneHeroCard from "@/features/phones/components/PhoneHeroCard";
 import SpecsRenderer from "@/features/phones/components/SpecsRenderer";
@@ -15,10 +15,12 @@ interface SuggestedPhone {
   id: number;
   name: string;
   slug: string;
-  cardImage?: string | null;
+  cardImage: string | null;
 
   brand: {
+    id: number;
     name: string;
+    slug: string;
   };
 }
 
@@ -39,9 +41,9 @@ export default function PhoneDetailsClient({
     async function loadSuggestions() {
       try {
         const response = await fetch(
-          `/api/devices/suggestions?q=${encodeURIComponent(
+          `${process.env.NEXT_PUBLIC_API_URL}/search?q=${encodeURIComponent(
             model.name,
-          )}&id=${model.id}`,
+          )}&limit=4&exclude=${model.id}`,
         );
 
         if (!response.ok) {
@@ -56,7 +58,10 @@ export default function PhoneDetailsClient({
           );
         }
       } catch (error) {
-        console.error(error);
+        console.error(
+          "Failed to load suggestions:",
+          error,
+        );
       }
     }
 
@@ -69,11 +74,6 @@ export default function PhoneDetailsClient({
 
   const sections: PhoneSpecificationSection[] =
     model.specs?.sections ?? [];
-
-  // TEMPORARY DEBUG
-  console.log("Phone Model:", model);
-  console.log("Quick Specs:", model.quickSpecs);
-  console.log("Sections:", sections);
 
   return (
     <div className="mx-auto max-w-7xl space-y-16 px-4 py-10">

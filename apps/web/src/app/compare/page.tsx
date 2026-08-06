@@ -1,13 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface Device {
   id: number;
   name: string;
-  image: string;
-  brand: string;
+  slug: string;
+  image: string | null;
+
+  brand: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+
   specs?: Record<string, string>;
 }
 
@@ -27,12 +34,37 @@ export default function ComparePage() {
   /* ================= FETCH ================= */
 
   useEffect(() => {
-    fetch("/api/devices")
-      .then((r) => r.json())
-      .then((data) => {
-        const safe = Array.isArray(data?.results) ? data.results : [];
-        setDevices(safe);
-      });
+    const loadDevices = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/phones`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load phones.");
+        }
+
+        const data = await response.json();
+
+        const phones: Device[] = (data.items ?? []).map(
+          (phone: any) => ({
+            id: phone.id,
+            name: phone.name,
+            slug: phone.slug,
+            image: phone.cardImage,
+            brand: phone.brand,
+            specs: {},
+          }),
+        );
+
+        setDevices(phones);
+      } catch (error) {
+        console.error("Failed to load phones.", error);
+        setDevices([]);
+      }
+    };
+
+    loadDevices();
   }, []);
 
   /* ================= SEARCH ================= */
@@ -48,9 +80,13 @@ export default function ComparePage() {
 
     const results = devices
       .filter(
-        (d) =>
-          `${d.brand} ${d.name}`.toLowerCase().includes(q) &&
-          !selectedDevices.some((s) => s.id === d.id)
+        (device) =>
+          `${device.brand.name} ${device.name}`
+            .toLowerCase()
+            .includes(q) &&
+          !selectedDevices.some(
+            (selected) => selected.id === device.id,
+          ),
       )
       .slice(0, 8);
 
@@ -61,116 +97,149 @@ export default function ComparePage() {
 
   /* ================= KEYBOARD ================= */
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!dropdownOpen || filteredDevices.length === 0) return;
+  const handleKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (!dropdownOpen || filteredDevices.length === 0) {
+      return;
+    }
 
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setHighlightedIndex((p) =>
-        p < filteredDevices.length - 1 ? p + 1 : 0
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+
+      setHighlightedIndex((previous) =>
+        previous < filteredDevices.length - 1
+          ? previous + 1
+          : 0,
       );
     }
 
-    if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setHighlightedIndex((p) =>
-        p > 0 ? p - 1 : filteredDevices.length - 1
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+
+      setHighlightedIndex((previous) =>
+        previous > 0
+          ? previous - 1
+          : filteredDevices.length - 1,
       );
     }
 
-    if (e.key === "Enter") {
-      e.preventDefault();
+    if (event.key === "Enter") {
+      event.preventDefault();
       addDevice(filteredDevices[highlightedIndex]);
     }
 
-    if (e.key === "Escape") {
+    if (event.key === "Escape") {
       setDropdownOpen(false);
     }
   };
 
-  /* auto scroll highlighted item */
+  /* ================= AUTO SCROLL ================= */
+
   useEffect(() => {
-    const el = resultsRef.current?.querySelector(
-      `[data-index="${highlightedIndex}"]`
+    const element = resultsRef.current?.querySelector(
+      `[data-index="${highlightedIndex}"]`,
     ) as HTMLElement | null;
 
-    el?.scrollIntoView({ block: "nearest" });
+    element?.scrollIntoView({
+      block: "nearest",
+    });
   }, [highlightedIndex]);
 
   /* ================= SPECS ================= */
 
   const allSpecs = useMemo(() => {
-    const set = new Set<string>();
-    selectedDevices.forEach((d) => {
-      Object.keys(d.specs || {}).forEach((k) => set.add(k));
+    const keys = new Set<string>();
+
+    selectedDevices.forEach((device) => {
+      Object.keys(device.specs ?? {}).forEach((key) =>
+        keys.add(key),
+      );
     });
-    return Array.from(set);
+
+    return Array.from(keys);
   }, [selectedDevices]);
 
   /* ================= ACTIONS ================= */
 
   const addDevice = (device: Device) => {
-    if (!device || selectedDevices.length >= MAX_DEVICES) return;
+    if (!device || selectedDevices.length >= MAX_DEVICES) {
+      return;
+    }
 
-    setSelectedDevices((p) => [...p, device]);
+    setSelectedDevices((previous) => [
+      ...previous,
+      device,
+    ]);
+
     setSearch("");
     setFilteredDevices([]);
     setDropdownOpen(false);
 
-    setTimeout(() => inputRef.current?.focus(), 0);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
   };
 
   const removeDevice = (id: number) => {
-    setSelectedDevices((p) => p.filter((d) => d.id !== id));
+    setSelectedDevices((previous) =>
+      previous.filter((device) => device.id !== id),
+    );
   };
 
   /* ================= UI ================= */
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-20">
-
+    <div className="mx-auto max-w-7xl px-4 pt-24 pb-20 md:px-6">
       {/* SEARCH */}
-      <div className="relative max-w-2xl mx-auto mb-10">
+
+      <div className="relative mx-auto mb-10 max-w-2xl">
         <input
           ref={inputRef}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(event) =>
+            setSearch(event.target.value)
+          }
           onKeyDown={handleKeyDown}
           placeholder={
             selectedDevices.length >= MAX_DEVICES
               ? "Max devices selected"
               : "Search devices..."
           }
-          disabled={selectedDevices.length >= MAX_DEVICES}
+          disabled={
+            selectedDevices.length >= MAX_DEVICES
+          }
           className="w-full rounded-xl border border-border px-5 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-primary/40"
           role="combobox"
           aria-expanded={dropdownOpen}
           aria-controls="device-results"
         />
 
-        <MagnifyingGlassIcon className="w-5 h-5 absolute right-4 top-3.5 text-muted-foreground" />
+        <MagnifyingGlassIcon className="absolute top-3.5 right-4 h-5 w-5 text-muted-foreground" />
 
         {dropdownOpen && (
           <div
             id="device-results"
             ref={resultsRef}
             role="listbox"
-            className="absolute w-full mt-2 bg-background border border-border rounded-xl shadow-lg max-h-60 overflow-auto z-10"
+            className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-border bg-background shadow-lg"
           >
-            {filteredDevices.map((d, i) => (
+            {filteredDevices.map((device, index) => (
               <button
-                key={d.id}
-                data-index={i}
+                key={device.id}
+                data-index={index}
                 role="option"
-                aria-selected={i === highlightedIndex}
-                onClick={() => addDevice(d)}
-                className={`w-full text-left px-4 py-2 ${
-                  i === highlightedIndex
+                aria-selected={
+                  index === highlightedIndex
+                }
+                onClick={() => addDevice(device)}
+                className={`w-full px-4 py-2 text-left ${
+                  index === highlightedIndex
                     ? "bg-muted"
                     : "hover:bg-muted/60"
                 }`}
               >
-                {d.brand} {d.name}
+                {device.brand.name} {device.name}
               </button>
             ))}
           </div>
@@ -178,50 +247,70 @@ export default function ComparePage() {
       </div>
 
       {selectedDevices.length > 0 && (
-        <div className="border rounded-2xl overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border">
+          <div className="grid grid-cols-2 border-b md:grid-cols-3">
+            <div className="hidden bg-muted/30 md:block" />
 
-          <div className="grid grid-cols-2 md:grid-cols-3 border-b">
-            <div className="hidden md:block bg-muted/30" />
-
-            {selectedDevices.map((d) => (
-              <div key={d.id} className="relative p-4 md:p-6 text-center">
+            {selectedDevices.map((device) => (
+              <div
+                key={device.id}
+                className="relative p-4 text-center md:p-6"
+              >
                 <button
-                  onClick={() => removeDevice(d.id)}
-                  className="absolute right-3 top-3 focus:outline-none focus:ring-2 rounded"
+                  onClick={() =>
+                    removeDevice(device.id)
+                  }
+                  className="absolute top-3 right-3 rounded focus:ring-2 focus:outline-none"
                 >
-                  <XMarkIcon className="w-4 h-4 md:w-5 md:h-5" />
+                  <XMarkIcon className="h-4 w-4 md:h-5 md:w-5" />
                 </button>
 
                 <img
-                  src={d.image}
-                  className="w-24 h-24 md:w-40 md:h-40 object-contain mx-auto mb-2"
+                  src={
+                    device.image ??
+                    "/images/phones/a75.jpg"
+                  }
+                  alt={device.name}
+                  className="mx-auto mb-2 h-24 w-24 object-contain md:h-40 md:w-40"
                 />
 
-                <h2 className="font-bold text-sm md:text-lg">
-                  {d.brand} {d.name}
+                <h2 className="text-sm font-bold md:text-lg">
+                  {device.brand.name} {device.name}
                 </h2>
               </div>
             ))}
           </div>
 
           {selectedDevices.length === 2 &&
-            allSpecs.map((spec, idx) => {
-              const a = selectedDevices[0].specs?.[spec] || "-";
-              const b = selectedDevices[1].specs?.[spec] || "-";
+            allSpecs.map((spec, index) => {
+              const first =
+                selectedDevices[0].specs?.[spec] ??
+                "-";
+
+              const second =
+                selectedDevices[1].specs?.[spec] ??
+                "-";
 
               return (
                 <div
                   key={spec}
-                  className={`grid grid-cols-2 md:grid-cols-3 border-b ${
-                    idx % 2 === 0 ? "bg-muted/20" : ""
+                  className={`grid grid-cols-2 border-b md:grid-cols-3 ${
+                    index % 2 === 0
+                      ? "bg-muted/20"
+                      : ""
                   }`}
                 >
-                  <div className="hidden md:block p-4 font-medium">
+                  <div className="hidden p-4 font-medium md:block">
                     {spec}
                   </div>
 
-                  <div className="p-3 md:p-4 text-center">{a}</div>
-                  <div className="p-3 md:p-4 text-center">{b}</div>
+                  <div className="p-3 text-center md:p-4">
+                    {first}
+                  </div>
+
+                  <div className="p-3 text-center md:p-4">
+                    {second}
+                  </div>
                 </div>
               );
             })}

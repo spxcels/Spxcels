@@ -56,7 +56,7 @@ export default function FeaturedPhone() {
   const glareY = useTransform(mouseY, [-20, 20], ["0%", "100%"]);
 
   const handleMouseMove = (
-    event: React.MouseEvent<HTMLDivElement>
+    event: React.MouseEvent<HTMLDivElement>,
   ) => {
     const rect = event.currentTarget.getBoundingClientRect();
 
@@ -75,14 +75,16 @@ export default function FeaturedPhone() {
     mouseY.set(0);
   };
 
-  /* ================= LOAD FEATURED DEVICES ================= */
+  /* ================= LOAD FEATURED PHONES ================= */
 
   useEffect(() => {
     let mounted = true;
 
     const loadFeaturedPhones = async () => {
       try {
-        const response = await fetch("/api/devices");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/phones?limit=3`,
+        );
 
         if (!response.ok) {
           throw new Error("Failed to load featured phones.");
@@ -90,9 +92,19 @@ export default function FeaturedPhone() {
 
         const data = await response.json();
 
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
 
-        setPhones((data.devices ?? []).slice(0, 3));
+        setPhones(
+          (data.items ?? []).map((phone: any) => ({
+            id: phone.id,
+            name: phone.name,
+            slug: phone.slug,
+            image: phone.cardImage,
+            brand: phone.brand,
+          })),
+        );
       } catch (error) {
         console.error(error);
 
@@ -112,10 +124,14 @@ export default function FeaturedPhone() {
   /* ================= AUTO ROTATE ================= */
 
   useEffect(() => {
-    if (phones.length <= 1) return;
+    if (phones.length <= 1) {
+      return;
+    }
 
     const interval = setInterval(() => {
-      setCurrentIndex((previous) => (previous + 1) % phones.length);
+      setCurrentIndex(
+        (previous) => (previous + 1) % phones.length,
+      );
     }, 5000);
 
     return () => clearInterval(interval);
@@ -137,8 +153,6 @@ export default function FeaturedPhone() {
     <section className="px-6 pt-6">
       <div className="mx-auto max-w-6xl">
         <div className="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-md md:p-10">
-          {/* BACKGROUND GLOW */}
-
           <motion.div
             animate={{ y: [0, -20, 0] }}
             transition={{
@@ -147,8 +161,6 @@ export default function FeaturedPhone() {
             }}
             className={`absolute inset-0 bg-gradient-to-br ${glow}`}
           />
-
-          {/* FLOATING PARTICLES */}
 
           <div className="pointer-events-none absolute inset-0">
             {[...Array(6)].map((_, index) => (
@@ -191,8 +203,6 @@ export default function FeaturedPhone() {
               }}
               className="relative flex flex-col items-center gap-8 md:flex-row"
             >
-              {/* PHONE IMAGE */}
-
               <motion.div
                 className="relative flex w-full justify-center perspective-[1200px] md:w-1/2"
                 onMouseMove={handleMouseMove}
@@ -204,7 +214,10 @@ export default function FeaturedPhone() {
                 }}
               >
                 <motion.img
-                  src={phone.image || "/images/phones/a75.jpg"}
+                  src={
+                    phone.image ??
+                    "/images/phones/a75.jpg"
+                  }
                   alt={phone.name}
                   className="relative z-10 max-h-72 object-contain drop-shadow-2xl"
                   animate={{
@@ -225,8 +238,6 @@ export default function FeaturedPhone() {
                   className="absolute h-40 w-40 rounded-full bg-white/20 blur-3xl"
                 />
               </motion.div>
-
-              {/* CONTENT */}
 
               <div className="w-full md:w-1/2">
                 <p className="text-sm text-muted-foreground">

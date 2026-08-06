@@ -1,41 +1,58 @@
-import { prisma } from "@spxcel/db";
-
-import { mapPhoneModel } from "@/features/phones/mappers/phone";
-
 import type { PhoneModel } from "@/features/phones/types";
 
-export interface PhoneBrand {
-  id: number;
-  name: string;
-  slug: string;
-}
-
-export interface GetPhonesResult {
-  brands: PhoneBrand[];
-  models: PhoneModel[];
-}
+import type {
+  GetPhonesResult,
+  PhoneBrand,
+  PhoneListResponse,
+} from "./types";
 
 export async function getPhones(): Promise<GetPhonesResult> {
-  const [brands, models] = await Promise.all([
-    prisma.phoneBrand.findMany({
-      orderBy: {
-        name: "asc",
+  const [brandsResponse, phonesResponse] = await Promise.all([
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/brands`, {
+      headers: {
+        Accept: "application/json",
       },
+      cache: "no-store",
     }),
 
-    prisma.phoneModel.findMany({
-      include: {
-        brand: true,
-        specs: true,
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/phones`, {
+      headers: {
+        Accept: "application/json",
       },
-      orderBy: {
-        name: "asc",
-      },
+      cache: "no-store",
     }),
   ]);
 
+  if (!brandsResponse.ok || !phonesResponse.ok) {
+    throw new Error("Failed to load phones.");
+  }
+
+  const brands: PhoneBrand[] = await brandsResponse.json();
+  const phones: PhoneListResponse = await phonesResponse.json();
+
+  const models: PhoneModel[] = phones.items.map((phone) => ({
+    id: phone.id,
+    name: phone.name,
+    slug: phone.slug,
+
+    brand: {
+      id: phone.brand.id,
+      name: phone.brand.name,
+      slug: phone.brand.slug,
+    },
+
+    cardImage: phone.cardImage,
+
+    specs: null,
+
+    colors: [],
+    variants: [],
+
+    quickSpecs: [],
+  }));
+
   return {
     brands,
-    models: models.map(mapPhoneModel),
+    models,
   };
 }

@@ -5,9 +5,7 @@ import type {
   PhoneSpecs,
 } from "@/features/phones/types";
 
-import type { Prisma } from "@spxcel/db";
-
-type PrismaPhoneModel = {
+type ApiPhoneModel = {
   id: number;
   name: string;
   slug: string;
@@ -23,24 +21,22 @@ type PrismaPhoneModel = {
   };
 
   specs: {
-    specs: Prisma.JsonValue | null;
+    specs: unknown;
   } | null;
 };
 
 export function mapPhoneSpecs(
-  value: Prisma.JsonValue | null,
+  value: unknown,
 ): PhoneSpecs | null {
   if (value == null) {
     return null;
   }
 
-  // Prisma stores this as JsonValue. We know the structure
-  // matches PhoneSpecs, so cast through unknown.
-  return value as unknown as PhoneSpecs;
+  return value as PhoneSpecs;
 }
 
 export function mapPhoneModel(
-  model: PrismaPhoneModel,
+  model: ApiPhoneModel,
 ): PhoneModel {
   const specs = mapPhoneSpecs(
     model.specs?.specs ?? null,

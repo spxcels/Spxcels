@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 
 /* ================= TYPES ================= */
 
@@ -11,110 +18,268 @@ type Phone = {
   slug: string;
   image: string | null;
   score: number;
-  brand: string; // 🔥 API now returns string
+  brand: {
+    id: number;
+    name: string;
+    slug: string;
+  };
 };
 
-export default function TrendingPhones() {
+/* ================= BRAND GLOW ================= */
+
+const brandGlow: Record<string, string> = {
+  Samsung: "from-blue-500/20 to-transparent",
+  Apple: "from-zinc-400/20 to-transparent",
+  Xiaomi: "from-orange-500/20 to-transparent",
+  OnePlus: "from-red-500/20 to-transparent",
+  Nothing: "from-gray-400/20 to-transparent",
+  Google: "from-emerald-500/20 to-transparent",
+};
+
+export default function FeaturedPhone() {
   const [phones, setPhones] = useState<Phone[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  /* ================= BADGE LOGIC ================= */
+  /* ================= MAGNETIC EFFECT ================= */
 
-  const getBadge = (score: number) => {
-    if (score >= 20)
-      return { label: "🔥 HOT", color: "bg-red-500 text-white" };
-    if (score >= 12)
-      return { label: "⭐ TOP", color: "bg-yellow-500 text-black" };
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
 
-    return { label: "⚡ NEW", color: "bg-blue-500 text-white" };
+  const rotateX = useSpring(mouseY, {
+    stiffness: 120,
+    damping: 18,
+  });
+
+  const rotateY = useSpring(mouseX, {
+    stiffness: 120,
+    damping: 18,
+  });
+
+  const glareX = useTransform(mouseX, [-20, 20], ["0%", "100%"]);
+  const glareY = useTransform(mouseY, [-20, 20], ["0%", "100%"]);
+
+  const handleMouseMove = (
+    event: React.MouseEvent<HTMLDivElement>,
+  ) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+
+    const x =
+      (event.clientX - (rect.left + rect.width / 2)) / 25;
+
+    const y =
+      (event.clientY - (rect.top + rect.height / 2)) / 25;
+
+    mouseX.set(x);
+    mouseY.set(-y);
   };
 
-  /* ================= LOAD DATA ================= */
+  const resetMouse = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+
+  /* ================= LOAD FEATURED PHONES ================= */
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch("/api/devices");
-        const data = await res.json();
+    let mounted = true;
 
-        // 🔥 FIXED HERE
-        setPhones((data.results || []).slice(0, 6));
-      } catch (err) {
-        console.error("Failed to load trending phones", err);
-      } finally {
-        setLoading(false);
+    const loadFeaturedPhones = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/phones?limit=3`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load featured phones.");
+        }
+
+        const data = await response.json();
+
+        if (!mounted) return;
+
+        const phones: Phone[] = (data.items ?? []).map(
+          (phone: any, index: number) => ({
+            id: phone.id,
+            name: phone.name,
+            slug: phone.slug,
+            image: phone.cardImage,
+            brand: phone.brand,
+            score: 20 - index,
+          }),
+        );
+
+        setPhones(phones);
+      } catch (error) {
+        console.error(error);
+
+        if (mounted) {
+          setPhones([]);
+        }
       }
     };
 
-    load();
+    loadFeaturedPhones();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  /* ================= LOADING ================= */
+  /* ================= AUTO ROTATE ================= */
 
-  if (loading) {
-    return (
-      <section className="px-6 py-16 md:py-20 bg-muted/20">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-sm text-muted-foreground">
-            Loading trending phones...
-          </p>
-        </div>
-      </section>
-    );
+  useEffect(() => {
+    if (phones.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex(
+        (previous) => (previous + 1) % phones.length,
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [phones]);
+
+  if (phones.length === 0) {
+    return null;
   }
+
+  const phone = phones[currentIndex];
+
+  const glow =
+    brandGlow[phone.brand.name] ??
+    "from-primary/20 to-transparent";
 
   /* ================= UI ================= */
 
   return (
-    <section className="px-6 py-16 md:py-20 bg-muted/20">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">🔥 Trending Phones</h2>
+    <section className="px-6 pt-6">
+      <div className="mx-auto max-w-6xl">
+        <div className="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-md md:p-10">
+          {/* BACKGROUND GLOW */}
 
-          <Link
-            href="/phones"
-            className="text-sm text-muted-foreground hover:text-foreground transition"
-          >
-            View all →
-          </Link>
-        </div>
+          <motion.div
+            animate={{ y: [0, -20, 0] }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+            }}
+            className={`absolute inset-0 bg-gradient-to-br ${glow}`}
+          />
 
-        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-          {phones.map((phone) => {
-            const badge = getBadge(phone.score);
+          {/* FLOATING PARTICLES */}
 
-            return (
-              <Link
-                key={phone.id}
-                href={`/phones/${phone.slug}`}
-                className="group overflow-hidden border rounded-xl bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+          <div className="pointer-events-none absolute inset-0">
+            {[...Array(6)].map((_, index) => (
+              <motion.div
+                key={index}
+                className="absolute h-2 w-2 rounded-full bg-white/20"
+                initial={{
+                  x: Math.random() * 600,
+                  y: Math.random() * 300,
+                }}
+                animate={{
+                  y: [0, -30, 0],
+                  opacity: [0.2, 0.6, 0.2],
+                }}
+                transition={{
+                  duration: 6 + index,
+                  repeat: Infinity,
+                }}
+              />
+            ))}
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={phone.id}
+              initial={{
+                opacity: 0,
+                y: 20,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              exit={{
+                opacity: 0,
+                y: -20,
+              }}
+              transition={{
+                duration: 0.45,
+              }}
+              className="relative flex flex-col items-center gap-8 md:flex-row"
+            >
+              {/* PHONE IMAGE */}
+
+              <motion.div
+                className="relative flex w-full justify-center perspective-[1200px] md:w-1/2"
+                onMouseMove={handleMouseMove}
+                onMouseLeave={resetMouse}
+                style={{
+                  rotateX,
+                  rotateY,
+                  transformStyle: "preserve-3d",
+                }}
               >
-                <div className="relative aspect-[4/3] flex items-center justify-center overflow-hidden bg-gradient-to-b from-muted/60 to-muted">
-                  <span
-                    className={`absolute top-3 left-3 text-xs px-2 py-1 rounded-full font-medium ${badge.color}`}
+                <motion.img
+                  src={
+                    phone.image ||
+                    "/images/phones/a75.jpg"
+                  }
+                  alt={phone.name}
+                  className="relative z-10 max-h-72 object-contain drop-shadow-2xl"
+                  animate={{
+                    y: [0, -10, 0],
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+
+                <motion.div
+                  style={{
+                    left: glareX,
+                    top: glareY,
+                  }}
+                  className="absolute h-40 w-40 rounded-full bg-white/20 blur-3xl"
+                />
+              </motion.div>
+
+              {/* CONTENT */}
+
+              <div className="w-full md:w-1/2">
+                <p className="text-sm text-muted-foreground">
+                  🔥 Flagship Spotlight
+                </p>
+
+                <h2 className="mt-2 text-3xl font-bold md:text-4xl">
+                  {phone.name}
+                </h2>
+
+                <p className="mt-2 text-muted-foreground">
+                  {phone.brand.name}
+                </p>
+
+                <div className="mt-6 flex gap-3">
+                  <Link
+                    href={`/phones/${phone.slug}`}
+                    className="rounded-full bg-primary px-6 py-3 text-primary-foreground transition hover:opacity-90"
                   >
-                    {badge.label}
-                  </span>
+                    View Details
+                  </Link>
 
-                  <img
-                    src={phone.image || "/images/phones/a75.jpg"}
-                    alt={phone.name}
-                    className="w-full h-full object-contain p-6 group-hover:scale-110 transition duration-300"
-                  />
+                  <Link
+                    href="/compare"
+                    className="rounded-full bg-muted px-6 py-3 transition hover:bg-muted/80"
+                  >
+                    Compare
+                  </Link>
                 </div>
-
-                <div className="p-4">
-                  <p className="text-sm text-muted-foreground">
-                    {phone.brand ?? "Unknown"}
-                  </p>
-
-                  <h3 className="mt-1 text-lg font-semibold">
-                    {phone.name}
-                  </h3>
-                </div>
-              </Link>
-            );
-          })}
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </section>
