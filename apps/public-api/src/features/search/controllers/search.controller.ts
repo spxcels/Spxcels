@@ -22,14 +22,14 @@ export class SearchController {
     description: 'Search phone models by name or brand.',
   })
   @ApiQuery({
-    name: 'q',
+    name: 'query',
     required: true,
     example: 'iphone',
   })
   @ApiQuery({
     name: 'limit',
     required: false,
-    example: 5,
+    example: 8,
   })
   @ApiQuery({
     name: 'exclude',
@@ -37,24 +37,39 @@ export class SearchController {
     example: 8,
   })
   @ApiOkResponse({
-    type: SearchResultDto,
-    isArray: true,
+    schema: {
+      type: 'object',
+      properties: {
+        results: {
+          type: 'array',
+          items: {
+            $ref: '#/components/schemas/SearchResultDto',
+          },
+        },
+      },
+    },
   })
   async search(
-    @Query('q') query: string,
+    @Query('query') query: string,
     @Query('limit') limit?: string,
     @Query('exclude') exclude?: string,
-  ): Promise<SearchResultDto[]> {
+  ): Promise<{ results: SearchResultDto[] }> {
     const searchQuery = query?.trim() ?? '';
 
     if (!searchQuery) {
-      return [];
+      return {
+        results: [],
+      };
     }
 
-    return this.searchService.search(
+    const results = await this.searchService.search(
       searchQuery,
-      Number(limit ?? 5),
+      Number(limit ?? 8),
       exclude ? Number(exclude) : undefined,
     );
+
+    return {
+      results,
+    };
   }
 }

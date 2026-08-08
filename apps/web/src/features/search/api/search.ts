@@ -10,7 +10,7 @@ export async function search({
   limit = 8,
 }: SearchParams): Promise<SearchResponse> {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/search?q=${encodeURIComponent(
+    `${process.env.NEXT_PUBLIC_API_URL}/search?query=${encodeURIComponent(
       query,
     )}&limit=${limit}`,
     {

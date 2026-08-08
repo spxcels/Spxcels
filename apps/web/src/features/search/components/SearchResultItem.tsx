@@ -1,39 +1,14 @@
-"use client";
+'use client'
 
-import Image from "next/image";
-import Link from "next/link";
-import {
-  ChevronRight,
-  Newspaper,
-  Smartphone,
-  Tags,
-} from "lucide-react";
+import { ChevronRight, Smartphone } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 
-import type { SearchResult } from "@/features/search/types";
+import type { SearchResult } from '@/features/search/types';
 
 interface SearchResultItemProps {
-  result: SearchResult;
-  onSelect?: () => void;
-}
-
-function ResultIcon({
-  type,
-}: {
-  type: SearchResult["type"];
-}) {
-  switch (type) {
-    case "phone":
-      return <Smartphone size={18} />;
-
-    case "brand":
-      return <Tags size={18} />;
-
-    case "news":
-      return <Newspaper size={18} />;
-
-    default:
-      return <Smartphone size={18} />;
-  }
+  result: SearchResult
+  onSelect?: () => void
 }
 
 export default function SearchResultItem({
@@ -42,44 +17,40 @@ export default function SearchResultItem({
 }: SearchResultItemProps) {
   return (
     <Link
-      href={result.url}
+      href={`/products/phones/${result.slug}`}
       onClick={onSelect}
-      className="group flex items-center gap-4 rounded-2xl px-4 py-3 transition-colors hover:bg-muted"
+      className="group flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-muted"
     >
       {/* Thumbnail */}
 
       <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/50 bg-muted">
-        {result.image ? (
+        {result.cardImage ? (
           <Image
-            src={result.image}
-            alt={result.title}
+            src={result.cardImage}
+            alt={result.name}
             width={48}
             height={48}
             className="h-full w-full object-contain"
           />
         ) : (
-          <ResultIcon type={result.type} />
+          <Smartphone size={18} />
         )}
       </div>
 
       {/* Content */}
 
       <div className="min-w-0 flex-1">
-        <h3 className="truncate font-medium text-foreground">
-          {result.title}
-        </h3>
+        <h3 className="truncate font-medium text-foreground">{result.name}</h3>
 
-        {result.subtitle && (
-          <p className="truncate text-sm text-muted-foreground">
-            {result.subtitle}
-          </p>
-        )}
+        <p className="truncate text-sm text-muted-foreground">
+          {result.brand.name}
+        </p>
       </div>
 
       {/* Type */}
 
-      <span className="hidden rounded-full bg-muted px-3 py-1 text-xs font-medium capitalize text-muted-foreground sm:block">
-        {result.type}
+      <span className="hidden rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground sm:block">
+        Phone
       </span>
 
       {/* Arrow */}
@@ -89,5 +60,5 @@ export default function SearchResultItem({
         className="text-muted-foreground transition-transform group-hover:translate-x-1"
       />
     </Link>
-  );
+  )
 }

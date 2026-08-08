@@ -7,13 +7,9 @@ import type { SearchResult } from "../types";
 
 export function useSearch() {
   const [open, setOpen] = useState(false);
-
   const [query, setQuery] = useState("");
-
   const [results, setResults] = useState<SearchResult[]>([]);
-
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState<string | null>(null);
 
   const close = useCallback(() => {
@@ -50,7 +46,8 @@ export function useSearch() {
         }
       } catch (err) {
         if (!cancelled) {
-          console.error(err);
+          console.error("Search failed:", err);
+          setResults([]);
           setError("Failed to search.");
         }
       } finally {
@@ -84,10 +81,7 @@ export function useSearch() {
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener(
-        "keydown",
-        handleKeyDown,
-      );
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -95,14 +89,10 @@ export function useSearch() {
     open,
     openDialog,
     close,
-
     query,
     setQuery,
-
     results,
-
     loading,
-
     error,
   };
 }

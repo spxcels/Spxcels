@@ -1,20 +1,15 @@
-export type SearchResultType =
-  | "phone"
-  | "brand"
-  | "news";
+export interface SearchBrand {
+  id: number;
+  name: string;
+  slug: string;
+}
 
 export interface SearchResult {
   id: number;
-
-  title: string;
-
-  subtitle: string;
-
-  image?: string;
-
-  type: SearchResultType;
-
-  url: string;
+  name: string;
+  slug: string;
+  cardImage: string | null;
+  brand: SearchBrand;
 }
 
 export interface SearchResponse {
