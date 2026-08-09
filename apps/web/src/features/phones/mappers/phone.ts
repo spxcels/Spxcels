@@ -20,9 +20,7 @@ type ApiPhoneModel = {
     slug: string;
   };
 
-  specs: {
-    specs: unknown;
-  } | null;
+  specs: PhoneSpecs | null;
 };
 
 export function mapPhoneSpecs(
@@ -38,9 +36,7 @@ export function mapPhoneSpecs(
 export function mapPhoneModel(
   model: ApiPhoneModel,
 ): PhoneModel {
-  const specs = mapPhoneSpecs(
-    model.specs?.specs ?? null,
-  );
+  const specs = mapPhoneSpecs(model.specs);
 
   return {
     id: model.id,
