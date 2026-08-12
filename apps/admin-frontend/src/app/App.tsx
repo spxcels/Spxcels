@@ -1,4 +1,9 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import { Toaster } from "sonner";
 
 /* ============================================
@@ -45,7 +50,6 @@ import PCsPage from "@/pages/products/pc-parts";
 
 import BrandsPage from "@/pages/products/phones/brands";
 import ModelsPage from "@/pages/products/phones/models";
-import CreatePhoneWizardPage from "@/pages/products/phones/create";
 import PhoneEditorPage from "@/pages/products/phones/editor";
 import BasicInfoPage from "@/pages/products/phones/basic-info";
 import SpecOrganizerPage from "@/pages/products/phones/spec-organizer";
@@ -62,26 +66,51 @@ import SecuritySettings from "@/pages/settings/SecuritySettings";
 import DatabaseSettings from "@/pages/settings/DatabaseSettings";
 
 /* ============================================
+   CREATE MODEL REDIRECT
+============================================ */
+
+function CreatePhoneModelRedirect() {
+  const location = useLocation();
+
+  return (
+    <Navigate
+      to={`/admin/products/phones/basic-info/new${location.search}`}
+      replace
+    />
+  );
+}
+
+/* ============================================
    APP
 ============================================ */
 
 export default function App() {
   return (
     <AuthProvider>
-      <Toaster position="top-right" richColors />
-
       <Routes>
         {/* ROOT */}
 
         <Route
           path="/"
-          element={<Navigate to="/admin/dashboard" replace />}
+          element={
+            <Navigate
+              to="/admin/dashboard"
+              replace
+            />
+          }
         />
 
         {/* AUTH */}
 
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route
+          path="/login"
+          element={<LoginPage />}
+        />
+
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
 
         {/* ADMIN */}
 
@@ -95,7 +124,10 @@ export default function App() {
         >
           {/* DASHBOARD */}
 
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route
+            path="dashboard"
+            element={<Dashboard />}
+          />
 
           {/* ============================================
               PHONE MODULE
@@ -111,9 +143,14 @@ export default function App() {
             element={<ModelsPage />}
           />
 
+          {/* New phone model starts from the shared
+              Basic Information editor. */}
+
           <Route
             path="products/phones/create"
-            element={<CreatePhoneWizardPage />}
+            element={
+              <CreatePhoneModelRedirect />
+            }
           />
 
           <Route
@@ -184,9 +221,16 @@ export default function App() {
 
         <Route
           path="*"
-          element={<Navigate to="/admin/dashboard" replace />}
+          element={
+            <Navigate
+              to="/admin/dashboard"
+              replace
+            />
+          }
         />
       </Routes>
+
+      <Toaster />
     </AuthProvider>
   );
 }
