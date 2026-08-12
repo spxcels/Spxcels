@@ -193,6 +193,21 @@ export default function CreatePhoneWizardPage() {
   async function handleFinish() {
     try {
       // =====================================
+      // DEBUG CREATE MODEL PAYLOAD
+      // =====================================
+
+      console.log(
+        "CREATE MODEL PAYLOAD",
+        {
+          name,
+          slug,
+          brandId,
+          colors,
+          variants,
+        },
+      );
+
+      // =====================================
       // CREATE MODEL
       // =====================================
 
