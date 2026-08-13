@@ -6,58 +6,82 @@ import api from "./axios";
 // ===============================
 export const auto = {
   tables() {
-    return api.get("/auto/metadata/tables").then(res => res.data);
+    return api
+      .get("/auto/metadata/tables")
+      .then((res) => res.data);
   },
 
   columns() {
-    return api.get("/auto/metadata/columns").then(res => res.data);
+    return api
+      .get("/auto/metadata/columns")
+      .then((res) => res.data);
   },
 
   stats() {
-    return api.get("/auto/stats").then(res => res.data);
+    return api
+      .get("/dashboard/stats")
+      .then((res) => res.data);
   },
 
   list(table: string) {
     return api
-      .get(`/auto/data/${encodeURIComponent(table)}`)
-      .then(res => res.data);
+      .get(
+        `/auto/data/${encodeURIComponent(table)}`,
+      )
+      .then((res) => res.data);
   },
 
-  get(table: string, id: string | number) {
+  get(
+    table: string,
+    id: string | number,
+  ) {
     return api
       .get(
-        `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(
-          String(id)
-        )}`
+        `/auto/data/${encodeURIComponent(
+          table,
+        )}/${encodeURIComponent(String(id))}`,
       )
-      .then(res => res.data);
+      .then((res) => res.data);
   },
 
-  create(table: string, data: any) {
+  create(
+    table: string,
+    data: any,
+  ) {
     return api
-      .post(`/auto/data/${encodeURIComponent(table)}`, data)
-      .then(res => res.data);
+      .post(
+        `/auto/data/${encodeURIComponent(table)}`,
+        data,
+      )
+      .then((res) => res.data);
   },
 
-  update(table: string, id: string | number, data: any) {
+  update(
+    table: string,
+    id: string | number,
+    data: any,
+  ) {
     return api
       .put(
-        `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(
-          String(id)
-        )}`,
-        data
+        `/auto/data/${encodeURIComponent(
+          table,
+        )}/${encodeURIComponent(String(id))}`,
+        data,
       )
-      .then(res => res.data);
+      .then((res) => res.data);
   },
 
-  remove(table: string, id: string | number) {
+  remove(
+    table: string,
+    id: string | number,
+  ) {
     return api
       .delete(
-        `/auto/data/${encodeURIComponent(table)}/${encodeURIComponent(
-          String(id)
-        )}`
+        `/auto/data/${encodeURIComponent(
+          table,
+        )}/${encodeURIComponent(String(id))}`,
       )
-      .then(res => res.data);
+      .then((res) => res.data);
   },
 
   // ===============================
@@ -67,8 +91,11 @@ export const auto = {
 
   createModel(data: { name: string }) {
     return api
-      .post("/auto/data/create-model", data)
-      .then(res => res.data);
+      .post(
+        "/auto/data/create-model",
+        data,
+      )
+      .then((res) => res.data);
   },
 
   // ===============================
@@ -76,21 +103,32 @@ export const auto = {
   // ===============================
 
   getDbUrl() {
-    return api.get("/admin/config/db-url").then(res => res.data);
+    return api
+      .get("/admin/config/db-url")
+      .then((res) => res.data);
   },
 
   updateDbUrl(dbUrl: string) {
     return api
-      .put("/admin/config/db-url", { url: dbUrl })
-      .then(res => res.data);
+      .put(
+        "/admin/config/db-url",
+        { url: dbUrl },
+      )
+      .then((res) => res.data);
   },
 
-  changePassword(oldPassword: string, newPassword: string) {
+  changePassword(
+    oldPassword: string,
+    newPassword: string,
+  ) {
     return api
-      .patch("/auth/change-password", {
-        currentPassword: oldPassword,
-        newPassword,
-      })
-      .then(res => res.data);
+      .patch(
+        "/auth/change-password",
+        {
+          currentPassword: oldPassword,
+          newPassword,
+        },
+      )
+      .then((res) => res.data);
   },
 };

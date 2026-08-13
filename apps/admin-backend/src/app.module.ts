@@ -20,6 +20,9 @@ import { AdminConfigModule } from "./admin-config/admin-config.module";
 // 🧠 Admin
 import { AdminModule } from "./admin/admin.module";
 
+// 📊 Dashboard
+import { DashboardModule } from "./dashboard/dashboard.module";
+
 // 📱 Phone Domain
 import { BrandsModule } from "./products/phones/brands/brands.module";
 import { CardImageModule } from "./products/phones/media/card-image/card-image.module";
@@ -44,6 +47,9 @@ import { SpecificationsModule } from "./products/phones/specifications/specifica
 
     // ⚙️ Admin Configuration
     AdminConfigModule,
+
+    // 📊 Dashboard
+    DashboardModule,
 
     // 📱 Phone Domain
     BrandsModule,

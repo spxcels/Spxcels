@@ -27,11 +27,8 @@ export class SpecificationsService {
   ): Prisma.InputJsonValue {
     return {
       raw: dto.raw,
-
       sections: dto.sections,
-
       warnings: dto.warnings,
-
       errors: dto.errors,
     } as Prisma.InputJsonValue;
   }
@@ -40,9 +37,7 @@ export class SpecificationsService {
      GET SPECIFICATIONS
   ===================================================== */
 
-  async findOne(
-    modelId: number,
-  ) {
+  async findOne(modelId: number) {
     const specs =
       await this.prisma.phoneSpecs.findUnique({
         where: {
@@ -59,26 +54,16 @@ export class SpecificationsService {
     const data =
       (specs.specs as {
         raw?: string;
-
         sections?: unknown[];
-
         warnings?: string[];
-
         errors?: string[];
       }) ?? {};
 
     return {
-      raw:
-        data.raw ?? "",
-
-      sections:
-        data.sections ?? [],
-
-      warnings:
-        data.warnings ?? [],
-
-      errors:
-        data.errors ?? [],
+      raw: data.raw ?? "",
+      sections: data.sections ?? [],
+      warnings: data.warnings ?? [],
+      errors: data.errors ?? [],
     };
   }
 
@@ -105,7 +90,6 @@ export class SpecificationsService {
     return this.prisma.phoneSpecs.create({
       data: {
         modelId: dto.phoneModelId,
-
         specs: this.buildJson(dto),
       },
     });
@@ -113,19 +97,39 @@ export class SpecificationsService {
 
   /* =====================================================
      UPDATE SPECIFICATIONS
+     
+     Creates the PhoneSpecs row if it does not
+     already exist, otherwise updates it.
   ===================================================== */
 
   async update(
     modelId: number,
     dto: UpdatePhoneSpecDto,
   ) {
-    await this.findOne(modelId);
+    const model =
+      await this.prisma.phoneModel.findUnique({
+        where: {
+          id: modelId,
+        },
+      });
 
-    return this.prisma.phoneSpecs.update({
+    if (!model) {
+      throw new NotFoundException(
+        "Phone model not found",
+      );
+    }
+
+    return this.prisma.phoneSpecs.upsert({
       where: {
         modelId,
       },
-      data: {
+
+      create: {
+        modelId,
+        specs: this.buildJson(dto),
+      },
+
+      update: {
         specs: this.buildJson(dto),
       },
     });
@@ -155,11 +159,12 @@ export class SpecificationsService {
       where: {
         modelId: dto.phoneModelId,
       },
+
       create: {
         modelId: dto.phoneModelId,
-
         specs: this.buildJson(dto),
       },
+
       update: {
         specs: this.buildJson(dto),
       },
@@ -170,9 +175,7 @@ export class SpecificationsService {
      DELETE SPECIFICATIONS
   ===================================================== */
 
-  async remove(
-    modelId: number,
-  ) {
+  async remove(modelId: number) {
     await this.findOne(modelId);
 
     await this.prisma.phoneSpecs.delete({

@@ -12,12 +12,19 @@ import {
 } from "@nestjs/common";
 
 import type { Response } from "express";
+
 import { AuthService } from "./auth.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
+
 import type { AuthenticatedRequest } from "../types/auth-request";
 
-import { IsEmail, IsString, MinLength } from "class-validator";
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+} from "class-validator";
+
 import * as bcrypt from "bcrypt";
 
 /* =====================================================
@@ -51,7 +58,7 @@ class ChangePasswordDto {
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
   ) {}
 
   /* =====================================================
@@ -62,37 +69,69 @@ export class AuthController {
   @Post("login")
   async login(
     @Body() body: LoginDto,
-    @Res({ passthrough: true }) res: Response
+    @Res({ passthrough: true }) res: Response,
   ) {
     const { email, password } = body;
 
-    const admin = await this.prisma.admin.findUnique({
-      where: { email },
-    });
+    const admin =
+      await this.prisma.admin.findUnique({
+        where: {
+          email,
+        },
+      });
 
     if (!admin) {
-      throw new UnauthorizedException("Invalid credentials");
+      throw new UnauthorizedException(
+        "Invalid credentials",
+      );
     }
 
-    const passwordMatch = await bcrypt.compare(password, admin.password);
+    const passwordMatch =
+      await bcrypt.compare(
+        password,
+        admin.password,
+      );
 
     if (!passwordMatch) {
-      throw new UnauthorizedException("Invalid credentials");
+      throw new UnauthorizedException(
+        "Invalid credentials",
+      );
     }
 
-    const token = this.authService.login({
-      id: admin.id,
-      email: admin.email,
-    });
+    const token =
+      this.authService.login({
+        id: admin.id,
+        email: admin.email,
+      });
 
-    // 🔥 DEV COOKIE SETTINGS (WORKS WITH DIFFERENT PORTS)
-    res.cookie(process.env.COOKIE_NAME ?? "spxcel_token", token, {
-      httpOnly: true,
-      sameSite: "none", // ⭐ REQUIRED for cross-origin (5173 → 3000)
-      secure: false,    // ⭐ false for localhost
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-      path: "/",
-    });
+    /* =================================================
+       AUTH COOKIE
+
+       Local development:
+       Frontend → http://localhost:5173
+       Backend  → http://localhost:3000
+
+       SameSite=Lax allows the browser to
+       send the cookie correctly for this setup.
+    ================================================= */
+
+    res.cookie(
+      process.env.COOKIE_NAME ??
+        "spxcel_token",
+      token,
+      {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: false,
+        maxAge:
+          1000 *
+          60 *
+          60 *
+          24 *
+          7,
+        path: "/",
+      },
+    );
 
     return {
       id: admin.id,
@@ -107,7 +146,10 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get("me")
-  me(@Req() req: AuthenticatedRequest) {
+  me(
+    @Req()
+    req: AuthenticatedRequest,
+  ) {
     return req.user;
   }
 
@@ -118,33 +160,61 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Patch("change-password")
   async changePassword(
-    @Body() body: ChangePasswordDto,
-    @Req() req: AuthenticatedRequest
-  ) {
-    const { oldPassword, newPassword } = body;
+    @Body()
+    body: ChangePasswordDto,
 
-    const admin = await this.prisma.admin.findUnique({
-      where: { id: req.user.id },
-    });
+    @Req()
+    req: AuthenticatedRequest,
+  ) {
+    const {
+      oldPassword,
+      newPassword,
+    } = body;
+
+    const admin =
+      await this.prisma.admin.findUnique({
+        where: {
+          id: req.user.id,
+        },
+      });
 
     if (!admin) {
-      throw new UnauthorizedException("User not found");
+      throw new UnauthorizedException(
+        "User not found",
+      );
     }
 
-    const oldMatch = await bcrypt.compare(oldPassword, admin.password);
+    const oldMatch =
+      await bcrypt.compare(
+        oldPassword,
+        admin.password,
+      );
 
     if (!oldMatch) {
-      throw new UnauthorizedException("Incorrect old password");
+      throw new UnauthorizedException(
+        "Incorrect old password",
+      );
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword =
+      await bcrypt.hash(
+        newPassword,
+        10,
+      );
 
     await this.prisma.admin.update({
-      where: { id: admin.id },
-      data: { password: hashedPassword },
+      where: {
+        id: admin.id,
+      },
+
+      data: {
+        password: hashedPassword,
+      },
     });
 
-    return { ok: true };
+    return {
+      ok: true,
+    };
   }
 
   /* =====================================================
@@ -152,13 +222,22 @@ export class AuthController {
   ===================================================== */
 
   @Post("logout")
-  logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie(process.env.COOKIE_NAME ?? "spxcel_token", {
-      sameSite: "none",
-      secure: false,
-      path: "/",
-    });
+  logout(
+    @Res({ passthrough: true })
+    res: Response,
+  ) {
+    res.clearCookie(
+      process.env.COOKIE_NAME ??
+        "spxcel_token",
+      {
+        sameSite: "lax",
+        secure: false,
+        path: "/",
+      },
+    );
 
-    return { ok: true };
+    return {
+      ok: true,
+    };
   }
 }
